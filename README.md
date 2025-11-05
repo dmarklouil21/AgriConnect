@@ -26,7 +26,7 @@ With AgriConnect, farmers can easily **list their products**, **manage orders**,
 - **Report Generation** – Generate reports for users, sales, and popular products.  
 - **Announcements & Notifications** – Post updates about agricultural programs and system news.  
 
-### 💬 Additional Features (Optional)
+### 💬 Additional Features 
 - **Messaging System** – Direct communication between farmers and buyers.  
 - **Feedback & Ratings** – Buyers can rate products or sellers.  
 - **Responsive Design** – Works smoothly on mobile and desktop devices.  
@@ -37,7 +37,7 @@ With AgriConnect, farmers can easily **list their products**, **manage orders**,
 ## 🧰 Tech Stack
 > *(Modify this section based on your actual implementation)*
 
-- **Frontend:** React  
+- **Frontend:** React, Tailwind CSS
 - **Backend:** Node.js, Express  
 - **Database:** MongoDB 
 - **Hosting:** Render 
