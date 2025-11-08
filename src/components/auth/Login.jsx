@@ -1,13 +1,19 @@
 // components/auth/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 
-const Login = ({ userType, onLogin, onSwitchToRegister, onBack }) => {
+const Login = ({ onLogin }) => {
+  const { userType } = useParams();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const actualUserType = userType || 'consumer';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,11 +25,13 @@ const Login = ({ userType, onLogin, onSwitchToRegister, onBack }) => {
         id: 1,
         name: formData.email.split('@')[0],
         email: formData.email,
-        type: userType,
+        type: actualUserType,
         avatar: formData.email.split('@')[0].substring(0, 2).toUpperCase()
       };
       onLogin(userData);
       setIsLoading(false);
+      // Navigate to the appropriate portal
+      navigate(`/${actualUserType}/dashboard`);
     }, 1500);
   };
 
@@ -58,12 +66,6 @@ const Login = ({ userType, onLogin, onSwitchToRegister, onBack }) => {
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          {/* <button
-            onClick={onBack}
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
-          >
-            ← Back to Home
-          </button> */}
           
           <div className="flex items-center justify-center space-x-2 mb-6">
             <div className={`w-10 h-10 bg-${getUserTypeColor()}-600 rounded-full flex items-center justify-center`}>
@@ -162,26 +164,16 @@ const Login = ({ userType, onLogin, onSwitchToRegister, onBack }) => {
             </button>
           </div>
 
-          {/* Demo Credentials */}
-          {/* <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</h4>
-            <p className="text-xs text-blue-700">
-              <strong>Email:</strong> demo@agriconnect.com<br />
-              <strong>Password:</strong> any password will work
-            </p>
-          </div> */}
-
           {/* Switch to Register */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
-              <button
-                type="button"
-                onClick={onSwitchToRegister}
+              <Link
+                to={`/register/${userType}`}
                 className="font-medium text-green-600 hover:text-green-500"
               >
                 Sign up here
-              </button>
+              </Link>
             </p>
           </div>
         </form>

@@ -102,9 +102,9 @@ const OrderManagement = () => {
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'all', label: 'All Orders', count: statusCounts.all },
-            { id: 'pending', label: 'Pending', count: statusCounts.pending },
-            { id: 'accepted', label: 'Accepted', count: statusCounts.accepted },
-            { id: 'completed', label: 'Completed', count: statusCounts.completed },
+            { id: 'Pending', label: 'Pending', count: statusCounts.pending },
+            { id: 'Accepted', label: 'Accepted', count: statusCounts.accepted },
+            { id: 'Completed', label: 'Completed', count: statusCounts.completed },
           ].map((filter) => (
             <button
               key={filter.id}

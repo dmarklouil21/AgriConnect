@@ -1,12 +1,18 @@
 // components/headers/FarmerHeader.jsx
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const FarmerHeader = ({ onBack, activeTab, onTabChange }) => {
-  const [ user, setUser ] = useState(null);
+const FarmerHeader = ({ onLogout, activeTab, onTabChange, user }) => {
+  const navigate = useNavigate();
 
-  const onLogout = () => {
-    console.log("Logged Out");
+  const handleBack = () => {
+    onLogout();
+    navigate('/');
   };
+
+  // const onLogout = () => {
+  //   console.log("Logged Out");
+  // };
 
   return (
     <header className="bg-white shadow-sm border-b">

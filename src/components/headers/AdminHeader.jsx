@@ -1,7 +1,10 @@
 // components/headers/AdminHeader.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const AdminHeader = ({ onBack, activeTab, onTabChange }) => {
+const AdminHeader = ({ onLogout, activeTab, onTabChange, user }) => {
+  const navigate = useNavigate();
+  
   const tabs = [
     { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'products', label: 'Product Monitoring', icon: '📊' },
@@ -9,13 +12,18 @@ const AdminHeader = ({ onBack, activeTab, onTabChange }) => {
     { id: 'announcements', label: 'Announcements', icon: '📢' },
   ];
 
+  const handleBack = () => {
+    onLogout();
+    navigate('/');
+  };
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-4">
             {/* <button
-              onClick={onBack}
+              onClick={handleBack}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
             >
               ← Back
@@ -27,14 +35,20 @@ const AdminHeader = ({ onBack, activeTab, onTabChange }) => {
               <span className="text-lg font-semibold text-gray-800">Admin Portal</span>
             </div>
           </div>
-          
+          {/* Stop here for now */}
           <div className="flex items-center space-x-4">
             <div className="hidden sm:block">
-              <div className="text-sm text-gray-600">Welcome, Admin!</div>
-              <div className="text-xs text-gray-500">Last login: Today, 09:42 AM</div>
+              <div className="text-sm text-gray-600">Welcome, {user?.name}!</div>
+              {/* <div className="text-xs text-gray-500">Last login: Today, 09:42 AM</div> */}
             </div>
+            <button
+              onClick={onLogout}
+              className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
+            >
+              Logout
+            </button>
             <div className="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center">
-              <span className="text-sm font-semibold text-purple-800">AD</span>
+              <span className="text-sm font-semibold text-purple-800">{user?.avatar}</span>
             </div>
           </div>
         </div>

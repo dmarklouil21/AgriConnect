@@ -41,21 +41,16 @@ const LandingPage = ({ onUserTypeSelect }) => {
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">For Farmers</h3>
               <p className="text-gray-600 mb-6">Showcase your produce, set fair prices, and connect directly with buyers.</p>
-              {/* <button
-                onClick={() => onUserTypeSelect('farmer')}
-                className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Farmer Portal
-              </button> */}
+   
               <div className="flex space-x-2 mt-4">
                 <button
-                  onClick={() => onUserTypeSelect('farmer')}
+                  onClick={() => window.location.href = `/login/farmer`}
                   className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => onUserTypeSelect('farmer')}
+                  onClick={() => window.location.href = `/register/farmer`}
                   className="flex-1 bg-green-100 text-green-700 py-2 px-4 rounded-lg hover:bg-green-200 transition-colors text-sm"
                 >
                   Register
@@ -70,22 +65,17 @@ const LandingPage = ({ onUserTypeSelect }) => {
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">For Consumers</h3>
               <p className="text-gray-600 mb-6">Discover fresh, local produce and support sustainable agriculture.</p>
-              {/* <button
-                onClick={() => onUserTypeSelect('consumer')}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Consumer Portal
-              </button> */}
+     
               <div className="flex space-x-2 mt-4">
                 <button
-                  onClick={() => onUserTypeSelect('consumer')}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  onClick={() => window.location.href = `/login/consumer`}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => onUserTypeSelect('consumer')}
-                  className="flex-1 bg-green-100 text-green-700 py-2 px-4 rounded-lg hover:bg-green-200 transition-colors text-sm"
+                  onClick={() => window.location.href = `/register/consumer`}
+                  className="flex-1 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg hover:bg-blue-200 transition-colors text-sm"
                 >
                   Register
                 </button>
@@ -99,22 +89,17 @@ const LandingPage = ({ onUserTypeSelect }) => {
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">For Administrators</h3>
               <p className="text-gray-600 mb-6">Manage platform operations and ensure smooth community interactions.</p>
-              {/* <button
-                onClick={() => onUserTypeSelect('admin')}
-                className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                Admin Portal
-              </button> */}
+    
               <div className="flex space-x-2 mt-4">
                 <button
-                  onClick={() => onUserTypeSelect('admin')}
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  onClick={() => window.location.href = `/login/admin`}
+                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-sm"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => onUserTypeSelect('admin')}
-                  className="flex-1 bg-green-100 text-green-700 py-2 px-4 rounded-lg hover:bg-green-200 transition-colors text-sm"
+                  onClick={() => window.location.href = `/register/admin`}
+                  className="flex-1 bg-purple-100 text-purple-700 py-2 px-4 rounded-lg hover:bg-purple-200 transition-colors text-sm"
                 >
                   Register
                 </button>

@@ -1,5 +1,6 @@
 // App.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import FarmerPortal from './components/portals/FarmerPortal';
 import ConsumerPortal from './components/portals/ConsumerPortal';
@@ -7,104 +8,90 @@ import AdminPortal from './components/portals/AdminPortal';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 
+// Main App Component with Router
 function App() {
-  const [currentView, setCurrentView] = useState('landing');
-  const [userType, setUserType] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
-  const handleUserTypeSelect = (type) => {
-    setUserType(type);
-    setCurrentView('login');
-  };
+  // Load user from localStorage on app start
+  useEffect(() => {
+    const savedUser = localStorage.getItem('agriConnect_user');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      setCurrentUser(userData);
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   const handleLogin = (userData) => {
     setIsAuthenticated(true);
     setCurrentUser(userData);
-    setCurrentView(`${userData.type}-portal`);
-  };
-
-  const handleRegister = (userData) => {
-    setIsAuthenticated(true);
-    setCurrentUser(userData);
-    setCurrentView(`${userData.type}-portal`);
+    // Save to localStorage
+    localStorage.setItem('agriConnect_user', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
-    setUserType(null);
-    setCurrentView('landing');
-  };
-
-  const switchToRegister = () => {
-    setCurrentView('register');
-  };
-
-  const switchToLogin = () => {
-    setCurrentView('login');
-  };
-
-  const renderPortal = () => {
-    if (!isAuthenticated || !currentUser) return null;
-
-    const portalProps = {
-      onBack: () => {
-        setIsAuthenticated(false);
-        setCurrentUser(null);
-        setCurrentView('landing');
-      },
-      onLogout: handleLogout,
-      user: currentUser
-    };
-
-    switch (currentUser.type) {
-      case 'farmer':
-        return <FarmerPortal {...portalProps} />;
-      case 'consumer':
-        return <ConsumerPortal {...portalProps} />;
-      case 'admin':
-        return <AdminPortal {...portalProps} />;
-      default:
-        return null;
-    }
-  };
-
-  const renderContent = () => {
-    switch (currentView) {
-      case 'landing':
-        return <LandingPage onUserTypeSelect={handleUserTypeSelect} />;
-      case 'login':
-        return (
-          <Login 
-            userType={userType}
-            onLogin={handleLogin}
-            onSwitchToRegister={switchToRegister}
-            onBack={() => setCurrentView('landing')}
-          />
-        );
-      case 'register':
-        return (
-          <Register 
-            userType={userType}
-            onRegister={handleRegister}
-            onSwitchToLogin={switchToLogin}
-            onBack={() => setCurrentView('landing')}
-          />
-        );
-      default:
-        if (isAuthenticated) {
-          return renderPortal();
-        }
-        return <LandingPage onUserTypeSelect={handleUserTypeSelect} />;
-    }
+    localStorage.removeItem('agriConnect_user');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-amber-50">
-      {renderContent()}
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-amber-50">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login/:userType?" element={<Login onLogin={handleLogin} />} />
+          <Route path="/register/:userType?" element={<Register onRegister={handleLogin} />} />
+          
+          {/* Protected Routes */}
+          <Route 
+            path="/farmer/*" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userType="farmer" currentUser={currentUser}>
+                <FarmerPortal onLogout={handleLogout} user={currentUser} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/consumer/*" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userType="consumer" currentUser={currentUser}>
+                <ConsumerPortal onLogout={handleLogout} user={currentUser} />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/*" 
+            element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userType="admin" currentUser={currentUser}>
+                <AdminPortal onLogout={handleLogout} user={currentUser} />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
+
+// Protected Route Component
+const ProtectedRoute = ({ children, isAuthenticated, userType, currentUser }) => {
+  const location = useLocation();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+  
+  if (currentUser && currentUser.type !== userType) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
 
 export default App;

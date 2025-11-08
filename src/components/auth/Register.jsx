@@ -1,7 +1,11 @@
 // components/auth/Register.jsx
 import React, { useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 
-const Register = ({ userType, onRegister, onSwitchToLogin, onBack }) => {
+const Register = ({ onRegister  }) => {
+  const { userType } = useParams();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -12,6 +16,9 @@ const Register = ({ userType, onRegister, onSwitchToLogin, onBack }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // If no userType in URL, default to consumer
+  const actualUserType = userType || 'consumer';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,8 +134,8 @@ const Register = ({ userType, onRegister, onSwitchToLogin, onBack }) => {
           <div className="flex items-center justify-center space-x-2 mb-6">
             <div className={`w-12 h-12 bg-${getUserTypeColor()}-600 rounded-full flex items-center justify-center`}>
               <span className="text-white text-xl">
-                {userType === 'farmer' ? '👨‍🌾' : 
-                 userType === 'consumer' ? '🛒' : '⚙️'}
+                {actualUserType === 'farmer' ? '👨‍🌾' : 
+                 actualUserType === 'consumer' ? '🛒' : '⚙️'}
               </span>
             </div>
             <div>
@@ -286,13 +293,12 @@ const Register = ({ userType, onRegister, onSwitchToLogin, onBack }) => {
             <div className="text-center mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={onSwitchToLogin}
+                <Link
+                  to={`/login/${actualUserType}`}
                   className="font-medium text-green-600 hover:text-green-500"
                 >
                   Sign in here
-                </button>
+                </Link>
               </p>
             </div>
           </div>
