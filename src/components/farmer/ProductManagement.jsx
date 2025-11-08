@@ -81,7 +81,7 @@ const ProductManagement = () => {
 
       {/* Add Product Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Add New Product</h3>
             <form onSubmit={handleAddProduct} className="space-y-4">

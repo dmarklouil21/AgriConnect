@@ -14,12 +14,12 @@ const AdminHeader = ({ onBack, activeTab, onTabChange }) => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center space-x-4">
-            <button
+            {/* <button
               onClick={onBack}
               className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
             >
               ← Back
-            </button>
+            </button> */}
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-sm">⚙️</span>
