@@ -1,5 +1,6 @@
 // components/farmer/OrderManagement.jsx
 import React, { useState } from 'react';
+import { Clock, CheckCircle, Truck, XCircle, Eye, X, AlertTriangle } from 'lucide-react';
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([
@@ -42,24 +43,20 @@ const OrderManagement = () => {
       customerPhone: '+1 (555) 456-7890',
       deliveryAddress: '789 Pine Rd, City, State 12345'
     },
-    { 
-      id: 'ORD-004', 
-      customer: 'David Smith', 
-      date: '2024-03-15', 
-      status: 'Pending', 
-      total: 52.46, 
-      items: [
-        { name: 'Fresh Carrots', quantity: 5, price: 3.49 },
-        { name: 'Green Lettuce', quantity: 3, price: 2.99 },
-        { name: 'Sweet Apples', quantity: 2, price: 5.99 }
-      ],
-      customerPhone: '+1 (555) 234-5678',
-      deliveryAddress: '321 Elm St, City, State 12345'
-    }
   ]);
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Pending': return Clock;
+      case 'Accepted': return CheckCircle;
+      case 'Completed': return Truck;
+      case 'Declined': return XCircle;
+      default: return Eye;
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -102,103 +99,115 @@ const OrderManagement = () => {
         <div className="flex flex-wrap gap-2">
           {[
             { id: 'all', label: 'All Orders', count: statusCounts.all },
-            { id: 'Pending', label: 'Pending', count: statusCounts.pending },
-            { id: 'Accepted', label: 'Accepted', count: statusCounts.accepted },
-            { id: 'Completed', label: 'Completed', count: statusCounts.completed },
-          ].map((filter) => (
-            <button
-              key={filter.id}
-              onClick={() => setFilterStatus(filter.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                filterStatus === filter.id
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {filter.label} ({filter.count})
-            </button>
-          ))}
+            { id: 'pending', label: 'Pending', count: statusCounts.pending },
+            { id: 'accepted', label: 'Accepted', count: statusCounts.accepted },
+            { id: 'completed', label: 'Completed', count: statusCounts.completed },
+          ].map((filter) => {
+            const FilterIcon = getStatusIcon(filter.id === 'all' ? 'all' : filter.id);
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setFilterStatus(filter.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center space-x-2 ${
+                  filterStatus === filter.id
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {/* <FilterIcon className="w-4 h-4" /> */}
+                <span>{filter.label} ({filter.count})</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Orders Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredOrders.map((order) => (
-          <div key={order.id} className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow">
-            {/* Order Header */}
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="font-semibold text-gray-800 text-lg">{order.id}</h3>
-                <p className="text-gray-600 text-sm">{order.customer}</p>
-                <p className="text-gray-500 text-xs">{order.date}</p>
-              </div>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                {order.status}
-              </span>
-            </div>
-
-            {/* Order Items */}
-            <div className="space-y-2 mb-4">
-              {order.items.map((item, index) => (
-                <div key={index} className="flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    {item.quantity}x {item.name}
-                  </span>
-                  <span className="text-gray-800 font-medium">
-                    ${(item.quantity * item.price).toFixed(2)}
-                  </span>
+        {filteredOrders.map((order) => {
+          const StatusIcon = getStatusIcon(order.status);
+          return (
+            <div key={order.id} className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow">
+              {/* Order Header */}
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-lg">{order.id}</h3>
+                  <p className="text-gray-600 text-sm">{order.customer}</p>
+                  <p className="text-gray-500 text-xs">{order.date}</p>
                 </div>
-              ))}
-            </div>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                  <StatusIcon className="w-3 h-3 mr-1" />
+                  {order.status}
+                </span>
+              </div>
 
-            {/* Order Total */}
-            <div className="flex justify-between items-center border-t pt-3 mb-4">
-              <span className="font-semibold text-gray-800">Total</span>
-              <span className="text-lg font-bold text-green-600">${order.total}</span>
-            </div>
+              {/* Order Items */}
+              <div className="space-y-2 mb-4">
+                {order.items.map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span className="text-gray-600">
+                      {item.quantity}x {item.name}
+                    </span>
+                    <span className="text-gray-800 font-medium">
+                      ${(item.quantity * item.price).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-2">
-              {order.status === 'Pending' && (
-                <>
+              {/* Order Total */}
+              <div className="flex justify-between items-center border-t pt-3 mb-4">
+                <span className="font-semibold text-gray-800">Total</span>
+                <span className="text-lg font-bold text-green-600">${order.total}</span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-2">
+                {order.status === 'Pending' && (
+                  <>
+                    <button
+                      onClick={() => handleStatusChange(order.id, 'Accepted')}
+                      className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center justify-center space-x-1"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Accept</span>
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(order.id, 'Declined')}
+                      className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition-colors text-sm flex items-center justify-center space-x-1"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>Decline</span>
+                    </button>
+                  </>
+                )}
+                
+                {order.status === 'Accepted' && (
                   <button
-                    onClick={() => handleStatusChange(order.id, 'Accepted')}
-                    className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                    onClick={() => handleStatusChange(order.id, 'Completed')}
+                    className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center justify-center space-x-1"
                   >
-                    Accept
+                    <Truck className="w-4 h-4" />
+                    <span>Mark Complete</span>
                   </button>
-                  <button
-                    onClick={() => handleStatusChange(order.id, 'Declined')}
-                    className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition-colors text-sm"
-                  >
-                    Decline
-                  </button>
-                </>
-              )}
-              
-              {order.status === 'Accepted' && (
+                )}
+
                 <button
-                  onClick={() => handleStatusChange(order.id, 'Completed')}
-                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  onClick={() => setSelectedOrder(order)}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center space-x-1"
                 >
-                  Mark Complete
+                  <Eye className="w-4 h-4" />
+                  <span>Details</span>
                 </button>
-              )}
-
-              <button
-                onClick={() => setSelectedOrder(order)}
-                className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-              >
-                View Details
-              </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredOrders.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">📦</div>
+          <Truck className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No orders found</h3>
           <p className="text-gray-500">No orders match the current filter</p>
         </div>
@@ -208,13 +217,16 @@ const OrderManagement = () => {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">Order Details</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
+                {/* <Eye className="w-5 h-5" /> */}
+                <span>Order Details</span>
+              </h3>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -239,87 +251,6 @@ const OrderManagement = () => {
                   </div>
                 </div>
               </div>
-
-              {/* Customer Info */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-2">Customer Information</h4>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Name:</span>
-                    <span className="font-medium">{selectedOrder.customer}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Phone:</span>
-                    <span className="font-medium">{selectedOrder.customerPhone}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600 block mb-1">Delivery Address:</span>
-                    <span className="font-medium text-sm">{selectedOrder.deliveryAddress}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Items */}
-              <div>
-                <h4 className="font-medium text-gray-700 mb-2">Order Items</h4>
-                <div className="space-y-2">
-                  {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <span className="font-medium text-gray-800">{item.name}</span>
-                        <span className="text-gray-600 text-sm block">Qty: {item.quantity}</span>
-                      </div>
-                      <span className="font-semibold text-green-600">
-                        ${(item.quantity * item.price).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Total */}
-              <div className="border-t pt-4">
-                <div className="flex justify-between items-center text-lg font-bold">
-                  <span>Total Amount:</span>
-                  <span className="text-green-600">${selectedOrder.total}</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              {selectedOrder.status === 'Pending' && (
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    onClick={() => {
-                      handleStatusChange(selectedOrder.id, 'Accepted');
-                      setSelectedOrder(null);
-                    }}
-                    className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Accept Order
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleStatusChange(selectedOrder.id, 'Declined');
-                      setSelectedOrder(null);
-                    }}
-                    className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    Decline Order
-                  </button>
-                </div>
-              )}
-
-              {selectedOrder.status === 'Accepted' && (
-                <button
-                  onClick={() => {
-                    handleStatusChange(selectedOrder.id, 'Completed');
-                    setSelectedOrder(null);
-                  }}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors mt-4"
-                >
-                  Mark as Completed
-                </button>
-              )}
             </div>
           </div>
         </div>

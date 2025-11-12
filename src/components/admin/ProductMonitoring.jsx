@@ -258,23 +258,23 @@ const ProductMonitoring = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-gray-800">{products.length}</div>
           <div className="text-gray-600 text-sm">Total Products</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-green-600">
             {products.filter(product => product.status === 'Approved').length}
           </div>
           <div className="text-gray-600 text-sm">Approved</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-yellow-600">
             {products.filter(product => product.status === 'Pending').length}
           </div>
           <div className="text-gray-600 text-sm">Pending Review</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-red-600">
             {products.filter(product => product.status === 'Rejected').length}
           </div>
@@ -318,7 +318,7 @@ const ProductMonitoring = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
-                        {getStatusIcon(product.status)} {product.status}
+                        {product.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

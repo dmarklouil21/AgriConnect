@@ -1,5 +1,20 @@
 // components/consumer/ProductBrowsing.jsx
 import React, { useState } from 'react';
+import { 
+  Search, 
+  Package, 
+  Star, 
+  ShoppingCart, 
+  Plus, 
+  Minus, 
+  X,
+  Truck,
+  MapPin,
+  Phone,
+  Mail,
+  CheckCircle,
+  AlertTriangle
+} from 'lucide-react';
 
 const ProductBrowsing = ({ onAddToCart }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +82,6 @@ const ProductBrowsing = ({ onAddToCart }) => {
         }
       });
       
-      // Show success feedback (you could add a toast here)
       setShowAddToCartModal(false);
       setSelectedProduct(null);
       setQuantity(1);
@@ -83,9 +97,9 @@ const ProductBrowsing = ({ onAddToCart }) => {
 
   // Get stock status
   const getStockStatus = (stock) => {
-    if (stock > 20) return { text: 'In Stock', class: 'bg-green-100 text-green-800' };
-    if (stock > 0) return { text: 'Low Stock', class: 'bg-yellow-100 text-yellow-800' };
-    return { text: 'Out of Stock', class: 'bg-red-100 text-red-800' };
+    if (stock > 20) return { text: 'In Stock', class: 'bg-green-100 text-green-800', icon: CheckCircle };
+    if (stock > 0) return { text: 'Low Stock', class: 'bg-yellow-100 text-yellow-800', icon: AlertTriangle };
+    return { text: 'Out of Stock', class: 'bg-red-100 text-red-800', icon: X };
   };
 
   return (
@@ -96,16 +110,16 @@ const ProductBrowsing = ({ onAddToCart }) => {
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
               <input
                 type="text"
                 placeholder="Search products or farmers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-blue-500"
               />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                🔍
-              </div>
             </div>
           </div>
 
@@ -115,13 +129,14 @@ const ProductBrowsing = ({ onAddToCart }) => {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors flex items-center space-x-1 ${
                   selectedCategory === category
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {category}
+                {/* <Package className="w-4 h-4" /> */}
+                <span>{category}</span>
               </button>
             ))}
           </div>
@@ -143,11 +158,12 @@ const ProductBrowsing = ({ onAddToCart }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {sortedProducts.map(product => {
           const stockStatus = getStockStatus(product.stock);
+          const StockIcon = stockStatus.icon;
           return (
             <div key={product.id} className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="w-full h-48 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                  <span className="text-4xl">🌱</span>
+                  <Package className="w-12 h-12 text-gray-400" />
                 </div>
                 
                 <div className="flex items-start justify-between mb-2">
@@ -159,11 +175,12 @@ const ProductBrowsing = ({ onAddToCart }) => {
                 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-1">
-                    <span className="text-yellow-500">⭐</span>
+                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
                     <span className="text-sm text-gray-600">{product.rating}</span>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${stockStatus.class}`}>
-                    {stockStatus.text}
+                  <span className={`text-xs px-2 py-1 rounded-full flex items-center space-x-1 ${stockStatus.class}`}>
+                    <StockIcon className="w-3 h-3" />
+                    <span>{stockStatus.text}</span>
                   </span>
                 </div>
 
@@ -176,7 +193,7 @@ const ProductBrowsing = ({ onAddToCart }) => {
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                 >
-                  <span>🛒</span>
+                  <ShoppingCart className="w-4 h-4" />
                   <span>{product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}</span>
                 </button>
               </div>
@@ -187,7 +204,7 @@ const ProductBrowsing = ({ onAddToCart }) => {
 
       {sortedProducts.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🌾</div>
+          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
           <p className="text-gray-500">Try adjusting your search or filters</p>
         </div>
@@ -197,14 +214,22 @@ const ProductBrowsing = ({ onAddToCart }) => {
       {showAddToCartModal && selectedProduct && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🌱</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <ShoppingCart className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">Add to Cart</h3>
+                  <p className="text-gray-600 text-sm">Confirm quantity and add to your shopping cart</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-semibold text-gray-800">Add to Cart</h3>
-                <p className="text-gray-600 text-sm">Confirm quantity and add to your shopping cart</p>
-              </div>
+              <button
+                onClick={() => setShowAddToCartModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Product Details */}
@@ -219,13 +244,17 @@ const ProductBrowsing = ({ onAddToCart }) => {
               <p className="text-gray-500 text-sm mb-3">{selectedProduct.description}</p>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <span className="text-yellow-500">⭐</span>
+                  <Star className="w-4 h-4 text-yellow-500 fill-current" />
                   <span className="text-sm text-gray-600">{selectedProduct.rating}</span>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full ${
+                <span className={`text-xs px-2 py-1 rounded-full flex items-center space-x-1 ${
                   getStockStatus(selectedProduct.stock).class
                 }`}>
-                  {getStockStatus(selectedProduct.stock).text}
+                  {(() => {
+                    const StockIcon = getStockStatus(selectedProduct.stock).icon;
+                    return <StockIcon className="w-3 h-3" />;
+                  })()}
+                  <span>{getStockStatus(selectedProduct.stock).text}</span>
                 </span>
               </div>
             </div>
@@ -242,7 +271,7 @@ const ProductBrowsing = ({ onAddToCart }) => {
                     disabled={quantity <= 1}
                     className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-lg">-</span>
+                    <Minus className="w-4 h-4" />
                   </button>
                   
                   <span className="text-xl font-semibold text-gray-800 w-12 text-center">
@@ -254,7 +283,7 @@ const ProductBrowsing = ({ onAddToCart }) => {
                     disabled={quantity >= selectedProduct.stock}
                     className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-lg">+</span>
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -283,7 +312,7 @@ const ProductBrowsing = ({ onAddToCart }) => {
                 onClick={handleConfirmAddToCart}
                 className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
               >
-                <span>🛒</span>
+                <ShoppingCart className="w-4 h-4" />
                 <span>Add to Cart</span>
               </button>
             </div>
@@ -295,13 +324,14 @@ const ProductBrowsing = ({ onAddToCart }) => {
                   key={qty}
                   onClick={() => handleQuantityChange(qty)}
                   disabled={qty > selectedProduct.stock}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-full transition-colors flex items-center space-x-1 ${
                     quantity === qty
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  {qty} {qty === 1 ? 'item' : 'items'}
+                  <Plus className="w-3 h-3" />
+                  <span>{qty} {qty === 1 ? 'item' : 'items'}</span>
                 </button>
               ))}
             </div>

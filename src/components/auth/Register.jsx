@@ -1,17 +1,35 @@
 // components/auth/Register.jsx
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Tractor,
+  ShoppingBag,
+  Settings,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  MapPin,
+  CheckSquare,
+  Loader2,
+  CheckCircle,
+  FileText
+} from 'lucide-react';
 
-const Register = ({ onRegister  }) => {
+const Register = ({ onRegister }) => {
   const { userType } = useParams();
   const navigate = useNavigate();
-
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
+    phone: '',
+    address: '',
+    farmName: '',
     agreeToTerms: false
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -49,7 +67,7 @@ const Register = ({ onRegister  }) => {
         id: Math.floor(Math.random() * 1000),
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
-        type: userType,
+        type: actualUserType,
         avatar: (formData.firstName[0] + formData.lastName[0]).toUpperCase()
       };
       onRegister(userData);
@@ -74,7 +92,7 @@ const Register = ({ onRegister  }) => {
   };
 
   const getUserTypeDisplay = () => {
-    switch (userType) {
+    switch (actualUserType) {
       case 'farmer': return 'Farmer';
       case 'consumer': return 'Consumer';
       case 'admin': return 'Administrator';
@@ -83,7 +101,7 @@ const Register = ({ onRegister  }) => {
   };
 
   const getUserTypeColor = () => {
-    switch (userType) {
+    switch (actualUserType) {
       case 'farmer': return 'green';
       case 'consumer': return 'blue';
       case 'admin': return 'purple';
@@ -91,8 +109,19 @@ const Register = ({ onRegister  }) => {
     }
   };
 
+  const getUserTypeIcon = () => {
+    switch (actualUserType) {
+      case 'farmer': return Tractor;
+      case 'consumer': return ShoppingBag;
+      case 'admin': return Settings;
+      default: return ShoppingBag;
+    }
+  };
+
+  const UserTypeIcon = getUserTypeIcon();
+
   const getRegistrationBenefits = () => {
-    switch (userType) {
+    switch (actualUserType) {
       case 'farmer':
         return [
           'Sell your produce directly to consumers',
@@ -124,19 +153,17 @@ const Register = ({ onRegister  }) => {
       <div className="max-w-4xl w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          {/* <button
-            onClick={onBack}
+          <Link 
+            to="/" 
             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
           >
-            ← Back to Home
-          </button> */}
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to Home
+          </Link>
           
           <div className="flex items-center justify-center space-x-2 mb-6">
             <div className={`w-12 h-12 bg-${getUserTypeColor()}-600 rounded-full flex items-center justify-center`}>
-              <span className="text-white text-xl">
-                {actualUserType === 'farmer' ? '👨‍🌾' : 
-                 actualUserType === 'consumer' ? '🛒' : '⚙️'}
-              </span>
+              <UserTypeIcon className="w-6 h-6 text-white" />
             </div>
             <div>
               <h2 className="text-3xl font-bold text-gray-900">
@@ -158,32 +185,42 @@ const Register = ({ onRegister  }) => {
                   <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
                     First Name
                   </label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="input-field"
-                    placeholder="John"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      required
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500`}
+                      placeholder="John"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
                     Last Name
                   </label>
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    required
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="input-field"
-                    placeholder="Doe"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      required
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500`}
+                      placeholder="Doe"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -191,57 +228,135 @@ const Register = ({ onRegister  }) => {
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
                 </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="john@example.com"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500`}
+                    placeholder="john@example.com"
+                  />
+                </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`input-field ${errors.password ? 'border-red-300' : ''}`}
-                  placeholder="At least 6 characters"
-                />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-                )}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500`}
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500 ${errors.password ? 'border-red-300' : ''}`}
+                      placeholder="At least 6 characters"
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500 ${errors.confirmPassword ? 'border-red-300' : ''}`}
+                      placeholder="Confirm your password"
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                  )}
+                </div>
+              </div>
+
+              {actualUserType === 'farmer' && (
+                <div>
+                  <label htmlFor="farmName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Farm Name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Tractor className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="farmName"
+                      name="farmName"
+                      type="text"
+                      value={formData.farmName}
+                      onChange={handleChange}
+                      className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500`}
+                      placeholder="Enter your farm name"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
                 </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={`input-field ${errors.confirmPassword ? 'border-red-300' : ''}`}
-                  placeholder="Confirm your password"
-                />
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-                )}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <MapPin className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="address"
+                    name="address"
+                    type="text"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-${getUserTypeColor()}-500`}
+                    placeholder="Enter your address"
+                  />
+                </div>
               </div>
 
               <div className="flex items-start space-x-3">
@@ -251,17 +366,19 @@ const Register = ({ onRegister  }) => {
                   type="checkbox"
                   checked={formData.agreeToTerms}
                   onChange={handleChange}
-                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded mt-1"
+                  className={`h-4 w-4 text-${getUserTypeColor()}-600 focus:ring-${getUserTypeColor()}-500 border-gray-300 rounded mt-1`}
                 />
-                <label htmlFor="agreeToTerms" className="text-sm text-gray-700">
-                  I agree to the{' '}
-                  <a href="#" className="text-green-600 hover:text-green-500 font-medium">
-                    Terms and Conditions
-                  </a>{' '}
-                  and{' '}
-                  <a href="#" className="text-green-600 hover:text-green-500 font-medium">
-                    Privacy Policy
-                  </a>
+                <label htmlFor="agreeToTerms" className="text-sm text-gray-700 flex items-start">
+                  <span>
+                    I agree to the{' '}
+                    <a href="#" className="text-${getUserTypeColor()}-600 hover:text-${getUserTypeColor()}-500 font-medium">
+                      Terms and Conditions
+                    </a>{' '}
+                    and{' '}
+                    <a href="#" className="text-${getUserTypeColor()}-600 hover:text-${getUserTypeColor()}-500 font-medium">
+                      Privacy Policy
+                    </a>
+                  </span>
                 </label>
               </div>
               {errors.agreeToTerms && (
@@ -277,10 +394,7 @@ const Register = ({ onRegister  }) => {
               >
                 {isLoading ? (
                   <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
                     Creating account...
                   </div>
                 ) : (
@@ -293,9 +407,9 @@ const Register = ({ onRegister  }) => {
             <div className="text-center mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link
+                <Link 
                   to={`/login/${actualUserType}`}
-                  className="font-medium text-green-600 hover:text-green-500"
+                  className="font-medium text-${getUserTypeColor()}-600 hover:text-${getUserTypeColor()}-500"
                 >
                   Sign in here
                 </Link>
@@ -306,14 +420,15 @@ const Register = ({ onRegister  }) => {
           {/* Benefits Section */}
           <div className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <CheckCircle className="w-5 h-5 text-${getUserTypeColor()}-600 mr-2" />
                 Why join as a {getUserTypeDisplay()}?
               </h3>
               <ul className="space-y-3">
                 {getRegistrationBenefits().map((benefit, index) => (
                   <li key={index} className="flex items-start space-x-3">
                     <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-green-600 text-sm">✓</span>
+                      <CheckCircle className={`w-3 h-3 text-${getUserTypeColor()}-600`} />
                     </div>
                     <span className="text-gray-700">{benefit}</span>
                   </li>
@@ -323,11 +438,16 @@ const Register = ({ onRegister  }) => {
 
             {/* Additional Info */}
             <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-800 mb-2">Quick Registration</h4>
-              <p className="text-xs text-blue-700">
-                Fill in your basic details and start using AgriConnect immediately. 
-                You can complete your profile later with additional information.
-              </p>
+              <div className="flex items-start space-x-2">
+                <FileText className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800 mb-1">Quick Registration</h4>
+                  <p className="text-xs text-blue-700">
+                    Fill in your basic details and start using AgriConnect immediately. 
+                    You can complete your profile later with additional information.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

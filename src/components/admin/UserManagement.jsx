@@ -267,23 +267,23 @@ const UserManagement = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-gray-800">{users.length}</div>
           <div className="text-gray-600 text-sm">Total Users</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-green-600">
             {users.filter(user => user.type === 'Farmer' && user.status === 'Active').length}
           </div>
           <div className="text-gray-600 text-sm">Active Farmers</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-blue-600">
             {users.filter(user => user.type === 'Consumer' && user.status === 'Active').length}
           </div>
           <div className="text-gray-600 text-sm">Active Consumers</div>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
+        <div className="bg-white rounded-xl p-6 border text-center">
           <div className="text-2xl font-bold text-yellow-600">
             {users.filter(user => user.status === 'Pending').length}
           </div>

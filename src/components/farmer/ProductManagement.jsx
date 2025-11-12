@@ -1,5 +1,6 @@
 // components/farmer/ProductManagement.jsx
 import React, { useState } from 'react';
+import { Plus, Edit, Trash2, Package, AlertTriangle, CheckCircle, X, Info } from 'lucide-react';
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([
@@ -133,7 +134,7 @@ const ProductManagement = () => {
           onClick={() => setShowAddModal(true)}
           className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
         >
-          <span>+</span>
+          <Plus className="w-5 h-5" />
           <span>Add Product</span>
         </button>
       </div>
@@ -144,7 +145,7 @@ const ProductManagement = () => {
           <div key={product.id} className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div className="w-20 h-20 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🌱</span>
+                <Package className="w-8 h-8 text-green-600" />
               </div>
               <div className="flex space-x-2">
                 <button 
@@ -152,14 +153,14 @@ const ProductManagement = () => {
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Edit product"
                 >
-                  ✏️
+                  <Edit className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => openDeleteConfirmation(product)}
                   className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                   title="Delete product"
                 >
-                  🗑️
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -170,38 +171,42 @@ const ProductManagement = () => {
             
             <div className="flex justify-between items-center mb-4">
               <span className="text-xl font-bold text-green-600">${product.price}</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${
                 product.stock > 20 
                   ? 'bg-green-100 text-green-800' 
                   : product.stock > 0 
                     ? 'bg-yellow-100 text-yellow-800' 
                     : 'bg-red-100 text-red-800'
               }`}>
-                Stock: {product.stock}
+                {product.stock <= 10 && <AlertTriangle className="w-3 h-3" />}
+                <span>Stock: {product.stock}</span>
               </span>
             </div>
             
             <div className="flex space-x-2">
               <button 
                 onClick={() => openEditModal(product)}
-                className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm flex items-center justify-center space-x-1"
               >
-                Edit
+                <Edit className="w-4 h-4" />
+                <span>Edit</span>
               </button>
               <button 
                 onClick={() => openStockModal(product)}
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center justify-center space-x-1"
               >
-                Update Stock
+                <Package className="w-4 h-4" />
+                <span>Update Stock</span>
               </button>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Empty State */}
       {products.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-6xl mb-4">🌾</div>
+          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No products yet</h3>
           <p className="text-gray-500">Add your first product to get started</p>
         </div>
@@ -211,7 +216,18 @@ const ProductManagement = () => {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Add New Product</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
+                {/* <Plus className="w-5 h-5" /> */}
+                <span>Add New Product</span>
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
@@ -219,7 +235,7 @@ const ProductManagement = () => {
                   type="text"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   placeholder="Enter product name"
                   required
                 />
@@ -230,7 +246,7 @@ const ProductManagement = () => {
                 <select
                   value={newProduct.category}
                   onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   required
                 >
                   <option value="">Select category</option>
@@ -254,7 +270,7 @@ const ProductManagement = () => {
                     min="0"
                     value={newProduct.price}
                     onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                     placeholder="0.00"
                     required
                   />
@@ -266,7 +282,7 @@ const ProductManagement = () => {
                     min="0"
                     value={newProduct.stock}
                     onChange={(e) => setNewProduct({...newProduct, stock: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                     placeholder="0"
                     required
                   />
@@ -279,7 +295,7 @@ const ProductManagement = () => {
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   placeholder="Describe your product..."
                 />
               </div>
@@ -308,7 +324,18 @@ const ProductManagement = () => {
       {showEditModal && editingProduct && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Edit Product</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
+                {/* <Edit className="w-5 h-5" /> */}
+                <span>Edit Product</span>
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={handleEditProduct} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
@@ -316,7 +343,7 @@ const ProductManagement = () => {
                   type="text"
                   value={editingProduct.name}
                   onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   required
                 />
               </div>
@@ -326,7 +353,7 @@ const ProductManagement = () => {
                 <select
                   value={editingProduct.category}
                   onChange={(e) => setEditingProduct({...editingProduct, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   required
                 >
                   <option value="Vegetables">Vegetables</option>
@@ -349,7 +376,7 @@ const ProductManagement = () => {
                     min="0"
                     value={editingProduct.price}
                     onChange={(e) => setEditingProduct({...editingProduct, price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                     required
                   />
                 </div>
@@ -360,7 +387,7 @@ const ProductManagement = () => {
                     min="0"
                     value={editingProduct.stock}
                     onChange={(e) => setEditingProduct({...editingProduct, stock: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                     required
                   />
                 </div>
@@ -372,7 +399,7 @@ const ProductManagement = () => {
                   value={editingProduct.description}
                   onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})}
                   rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   placeholder="Describe your product..."
                 />
               </div>
@@ -401,9 +428,18 @@ const ProductManagement = () => {
       {showStockModal && stockUpdateProduct && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Update Stock</h3>
-            <p className="text-gray-600 mb-4">Update inventory for {stockUpdateProduct.name}</p>
-            
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
+                {/* <Package className="w-5 h-5" /> */}
+                <span>Update Stock</span>
+              </h3>
+              <button
+                onClick={() => setShowStockModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             <form onSubmit={handleUpdateStock} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
@@ -419,7 +455,7 @@ const ProductManagement = () => {
                   min="0"
                   value={newStock}
                   onChange={(e) => setNewStock(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-green-500"
                   placeholder="Enter new stock quantity"
                   required
                 />
@@ -427,7 +463,7 @@ const ProductManagement = () => {
 
               <div className="bg-blue-50 rounded-lg p-3">
                 <div className="flex items-center space-x-2">
-                  <span className="text-blue-600">ℹ️</span>
+                  <Info className="w-8 h-8 text-blue-600" />
                   <p className="text-sm text-blue-700">
                     This will replace the current stock quantity. Use negative numbers to subtract from current stock.
                   </p>
@@ -461,7 +497,7 @@ const ProductManagement = () => {
             <div className="text-center">
               {/* Warning Icon */}
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                <span className="text-2xl text-red-600">⚠️</span>
+                <AlertTriangle className="w-8 h-8 text-red-600" />
               </div>
               
               <h3 className="text-xl font-semibold text-gray-800 mb-2">Delete Product</h3>
@@ -474,7 +510,7 @@ const ProductManagement = () => {
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-lg">🌱</span>
+                    <Package className="w-6 h-6 text-green-600" />
                   </div>
                   <div className="text-left">
                     <h4 className="font-medium text-gray-800">{productToDelete.name}</h4>
@@ -488,23 +524,25 @@ const ProductManagement = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={handleCancelDelete}
-                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center justify-center space-x-2"
                 >
-                  Cancel
+                  <X className="w-4 h-4" />
+                  <span>Cancel</span>
                 </button>
                 <button
                   onClick={handleConfirmDelete}
-                  className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium"
+                  className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center space-x-2"
                 >
-                  Delete Product
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Product</span>
                 </button>
               </div>
 
               {/* Warning Note */}
               <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
                 <div className="flex items-start space-x-2">
-                  <span className="text-red-600 text-sm">⚠️</span>
-                  <p className="text-xs text-red-700">
+                  <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-700 text-left">
                     This will permanently remove the product from your inventory. Any active orders containing this product may be affected.
                   </p>
                 </div>

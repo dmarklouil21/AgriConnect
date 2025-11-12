@@ -1,5 +1,7 @@
 // components/LandingPage.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Tractor, ShoppingBag, Settings } from 'lucide-react';
 
 const LandingPage = ({ onUserTypeSelect }) => {
   return (
@@ -9,7 +11,9 @@ const LandingPage = ({ onUserTypeSelect }) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-600 rounded-full"></div>
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <Tractor className="w-4 h-4 text-white" />
+              </div>
               <span className="text-xl font-bold text-green-800">AgriConnect</span>
             </div>
             <nav className="hidden md:flex space-x-6">
@@ -37,72 +41,69 @@ const LandingPage = ({ onUserTypeSelect }) => {
             {/* Farmer Card */}
             <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">👨‍🌾</span>
+                <Tractor className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">For Farmers</h3>
               <p className="text-gray-600 mb-6">Showcase your produce, set fair prices, and connect directly with buyers.</p>
-   
-              <div className="flex space-x-2 mt-4">
-                <button
-                  onClick={() => window.location.href = `/login/farmer`}
+              <div className="flex space-x-2">
+                <Link
+                  to={'/login/farmer'}
                   className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   Login
-                </button>
-                <button
-                  onClick={() => window.location.href = `/register/farmer`}
+                </Link>
+                <Link
+                  to={'/register/farmer'}
                   className="flex-1 bg-green-100 text-green-700 py-2 px-4 rounded-lg hover:bg-green-200 transition-colors text-sm"
                 >
                   Register
-                </button>
+                </Link>
               </div>
             </div>
 
             {/* Consumer Card */}
             <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🛒</span>
+                <ShoppingBag className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">For Consumers</h3>
               <p className="text-gray-600 mb-6">Discover fresh, local produce and support sustainable agriculture.</p>
-     
-              <div className="flex space-x-2 mt-4">
-                <button
-                  onClick={() => window.location.href = `/login/consumer`}
+              <div className="flex space-x-2">
+                <Link
+                  to={'/login/consumer'}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   Login
-                </button>
-                <button
-                  onClick={() => window.location.href = `/register/consumer`}
+                </Link>
+                <Link
+                  to={'/register/consumer'}
                   className="flex-1 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg hover:bg-blue-200 transition-colors text-sm"
                 >
                   Register
-                </button>
+                </Link>
               </div>
             </div>
 
             {/* Admin Card */}
             <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🧩</span>
+                <Settings className="w-8 h-8 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-4">For Administrators</h3>
               <p className="text-gray-600 mb-6">Manage platform operations and ensure smooth community interactions.</p>
-    
-              <div className="flex space-x-2 mt-4">
-                <button
-                  onClick={() => window.location.href = `/login/admin`}
+              <div className="flex space-x-2">
+                <Link
+                  to={'/login/admin'}
                   className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-sm"
                 >
                   Login
-                </button>
-                <button
-                  onClick={() => window.location.href = `/register/admin`}
+                </Link>
+                <Link
+                  to={'/register/admin'}
                   className="flex-1 bg-purple-100 text-purple-700 py-2 px-4 rounded-lg hover:bg-purple-200 transition-colors text-sm"
                 >
                   Register
-                </button>
+                </Link>
               </div>
             </div>
           </div>

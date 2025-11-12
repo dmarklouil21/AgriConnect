@@ -1,5 +1,20 @@
 // components/consumer/OrderTracking.jsx
 import React, { useState } from 'react';
+import { 
+  Package, 
+  Truck, 
+  CheckCircle, 
+  Clock, 
+  Eye, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Calendar,
+  DollarSign,
+  X,
+  ArrowLeft,
+  User
+} from 'lucide-react';
 
 const OrderTracking = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -73,12 +88,12 @@ const OrderTracking = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Completed': return '✅';
-      case 'Accepted': return '📦';
-      case 'Pending': return '⏳';
-      case 'Shipped': return '🚚';
-      case 'Cancelled': return '❌';
-      default: return '📋';
+      case 'Completed': return CheckCircle;
+      case 'Accepted': return Package;
+      case 'Pending': return Clock;
+      case 'Shipped': return Truck;
+      case 'Cancelled': return X;
+      default: return Package;
     }
   };
 
@@ -145,38 +160,44 @@ const OrderTracking = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{order.id}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.date}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                      {getStatusIcon(order.status)} {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.items.length} items
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    ${order.total}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => openOrderDetails(order)}
-                      className="text-blue-600 hover:text-blue-900 mr-3 font-medium"
-                    >
-                      View Details
-                    </button>
-                    {/* <button className="text-green-600 hover:text-green-900 font-medium">
-                      Track
-                    </button> */}
-                  </td>
-                </tr>
-              ))}
+              {orders.map((order) => {
+                const StatusIcon = getStatusIcon(order.status);
+                return (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{order.id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.date}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                        {/* <StatusIcon className="w-3 h-3 mr-1" /> */}
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.items.length} items
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                      ${order.total}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button 
+                        onClick={() => openOrderDetails(order)}
+                        className="text-blue-600 hover:text-blue-900 mr-3 font-medium flex items-center space-x-1"
+                      >
+                        {/* <Eye className="w-4 h-4" /> */}
+                        <span>View Details</span>
+                      </button>
+                      {/* <button className="text-green-600 hover:text-green-900 font-medium flex items-center space-x-1">
+                        <Truck className="w-4 h-4" />
+                        <span>Track</span>
+                      </button> */}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -196,7 +217,7 @@ const OrderTracking = () => {
                 onClick={closeOrderDetails}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <span className="text-2xl">×</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -204,7 +225,10 @@ const OrderTracking = () => {
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{getStatusIcon(selectedOrder.status)}</span>
+                  {(() => {
+                    const StatusIcon = getStatusIcon(selectedOrder.status);
+                    return <StatusIcon className="w-6 h-6 text-green-600" />;
+                  })()}
                   <div>
                     <h4 className="font-semibold text-gray-800">Order Status</h4>
                     <p className="text-gray-600">{getStatusDescription(selectedOrder.status)}</p>
@@ -224,7 +248,7 @@ const OrderTracking = () => {
                   {selectedOrder.items.map((item) => (
                     <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
                       <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center">
-                        <span className="text-xl">🌱</span>
+                        <Package className="w-6 h-6 text-green-600" />
                       </div>
                       <div className="flex-1">
                         <h5 className="font-medium text-gray-800">{item.name}</h5>
@@ -270,7 +294,10 @@ const OrderTracking = () => {
                 
                 {/* Timeline */}
                 <div className="mb-6">
-                  <h5 className="font-medium text-gray-700 mb-3">Order Timeline</h5>
+                  <h5 className="font-medium text-gray-700 mb-3 flex items-center">
+                    <Clock className="w-4 h-4 mr-2" />
+                    Order Timeline
+                  </h5>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -309,7 +336,10 @@ const OrderTracking = () => {
 
                 {/* Shipping Information */}
                 <div className="mb-6">
-                  <h5 className="font-medium text-gray-700 mb-2">Shipping Address</h5>
+                  <h5 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Shipping Address
+                  </h5>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-800">{selectedOrder.shippingAddress}</p>
                     {selectedOrder.deliveryNotes && (
@@ -322,16 +352,25 @@ const OrderTracking = () => {
 
                 {/* Farmer Information */}
                 <div className="mb-6">
-                  <h5 className="font-medium text-gray-700 mb-2">Farmer Information</h5>
+                  <h5 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <User className="w-4 h-4 mr-2" />
+                    Farmer Information
+                  </h5>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-800 font-medium">{selectedOrder.farmer}</p>
-                    <p className="text-sm text-gray-600">Phone: {selectedOrder.farmerPhone}</p>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <Phone className="w-3 h-3 text-gray-500" />
+                      <p className="text-sm text-gray-600">Phone: {selectedOrder.farmerPhone}</p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Payment Information */}
                 <div>
-                  <h5 className="font-medium text-gray-700 mb-2">Payment Method</h5>
+                  <h5 className="font-medium text-gray-700 mb-2 flex items-center">
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Payment Method
+                  </h5>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-800">{selectedOrder.paymentMethod}</p>
                   </div>
@@ -339,11 +378,13 @@ const OrderTracking = () => {
 
                 {/* Action Buttons */}
                 <div className="mt-6 flex space-x-3">
-                  <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                    Contact Farmer
+                  <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2">
+                    <Phone className="w-4 h-4" />
+                    <span>Contact Farmer</span>
                   </button>
-                  <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-                    Track Order
+                  <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2">
+                    <Truck className="w-4 h-4" />
+                    <span>Track Order</span>
                   </button>
                 </div>
               </div>
