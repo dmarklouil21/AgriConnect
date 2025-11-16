@@ -15,6 +15,15 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 
+// Product Management
+app.use('/api', require('./routes/products'));
+
+// Order Management
+app.use('/api', require('./routes/orders'));
+
+// Dashboard
+app.use('/api', require('./routes/dashboard'));
+
 // Basic route
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to my app backend!' });

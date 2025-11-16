@@ -1,9 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const Farmer = require('../models/Farmer');
-const Consumer = require('../models/Consumer');
-const Admin = require('../models/Admin');
+const User = require('../models/user/User');
+const Farmer = require('../models/user/Farmer');
+const Consumer = require('../models/user/Consumer');
+const Admin = require('../models/user/Admin');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
