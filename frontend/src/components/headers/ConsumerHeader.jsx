@@ -41,7 +41,7 @@ const ConsumerHeader = ({ onLogout, activeTab, onTabChange, cartItemsCount, user
             <div className="hidden sm:block text-sm text-gray-600">Welcome, {user?.name}!</div>
             <button
               onClick={onLogout}
-              className="text-gray-500 hover:text-gray-700 text-sm transition-colors flex items-center space-x-1"
+              className="text-gray-500 hover:text-gray-700 text-sm transition-colors flex items-center cursor-pointer space-x-1"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>

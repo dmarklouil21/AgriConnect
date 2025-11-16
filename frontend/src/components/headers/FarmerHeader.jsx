@@ -8,7 +8,7 @@ const FarmerHeader = ({ onLogout, activeTab, onTabChange, user }) => {
 
   const handleBack = () => {
     onLogout();
-    navigate('/');
+    navigate('/login');
   };
 
   const tabs = [
@@ -38,10 +38,10 @@ const FarmerHeader = ({ onLogout, activeTab, onTabChange, user }) => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="hidden sm:block text-sm text-gray-600">Welcome, {user?.name}!</div>
+            <div className="hidden sm:block text-sm text-gray-600">Welcome, {user?.firstName}!</div>
             <button
               onClick={onLogout}
-              className="text-gray-500 hover:text-gray-700 text-sm transition-colors flex items-center space-x-1"
+              className="text-gray-500 hover:text-gray-700 text-sm transition-colors flex items-center space-x-1 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>

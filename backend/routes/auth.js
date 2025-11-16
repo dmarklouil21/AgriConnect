@@ -11,7 +11,7 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password, userType, ...profileData } = req.body;
+    const { email, password, userType, ...profileData } = req.body;
 
     // Check if user exists
     let user = await User.findOne({ email });
@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Create new user
-    user = new User({ username, email, password, userType });
+    user = new User({ email, password, userType });
     await user.save();
 
     let userProfile;
@@ -85,24 +85,24 @@ router.post('/register', async (req, res) => {
       token,
       user: {
         id: user._id,
-        username: user.username,
         email: user.email,
         userType: user.userType
       }
     });
   } catch (error) {
     // If user was created but profile failed, delete the user
-    if (user) {
-      await User.findByIdAndDelete(user._id);
-    }
+    // if (user) {
+    //   await User.findByIdAndDelete(user._id);
+    // }
     res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Registration Error:", error);
   }
 });
 
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, userType } = req.body;
 
     // Check if user exists
     const user = await User.findOne({ email });
@@ -116,6 +116,11 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Account not supported 
+    if (userType !== user.userType) {
+      return res.status(400).json({ message: 'Account not supported for this portal' });
+    }
+
     // Generate token
     const token = jwt.sign(
       { userId: user._id },
@@ -127,13 +132,13 @@ router.post('/login', async (req, res) => {
       token,
       user: {
         id: user._id,
-        username: user.username,
-        email: user.email,
+        email: email,
         userType: user.userType
       }
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
+    console.error("Login Error:", error);
   }
 });
 
@@ -158,7 +163,6 @@ router.get('/me', auth, async (req, res) => {
     res.json({
       user: {
         id: req.user._id,
-        username: req.user.username,
         email: req.user.email,
         userType: req.user.userType
       },

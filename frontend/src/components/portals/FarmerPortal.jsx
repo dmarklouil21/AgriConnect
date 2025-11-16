@@ -1,12 +1,14 @@
 // components/portals/FarmerPortal.jsx
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import FarmerHeader from '../headers/FarmerHeader';
 import ProductManagement from '../farmer/ProductManagement';
 import OrderManagement from '../farmer/OrderManagement';
 import SalesDashboard from '../farmer/SalesDashboard';
 
-const FarmerPortal = ({ onLogout, user }) => {
+const FarmerPortal = () => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,11 +26,16 @@ const FarmerPortal = ({ onLogout, user }) => {
     navigate(`/farmer/${tab === 'dashboard' ? '' : tab}`);
   };
 
+  const handleLogout = () => {
+    const type = user?.userType || 'consumer';
+    navigate(`/${type}`);
+    logout();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <FarmerHeader 
-        onLogout={onLogout} 
+        onLogout={handleLogout} 
         activeTab={activeTab} 
         onTabChange={handleTabChange}
         user={user}

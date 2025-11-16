@@ -1,6 +1,6 @@
 // components/auth/Login.jsx
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Tractor, 
@@ -12,37 +12,49 @@ import {
   Eye, 
   EyeOff,
   Loader2,
-  Search
+  Search,
+  AlertCircle
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-const Login = ({ onLogin }) => {
+const Login = () => {
   const { userType } = useParams();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
-        id: 1,
-        name: formData.email.split('@')[0],
-        email: formData.email,
-        type: actualUserType,
-        avatar: formData.email.split('@')[0].substring(0, 2).toUpperCase()
-      };
-      onLogin(userData);
-      let redirectLink = userType === 'farmer' ? '/farmer' : userType === 'consumer' ? '/consumer' : '/admin'
-      navigate(redirectLink)
-    }, 1500);
+    try {
+      const result = await login(formData.email, formData.password, userType);
+      
+      if (result.success) {
+        // Redirect to the intended page or dashboard
+        // navigate(from, { replace: true });
+        let redirectLink = userType === 'farmer' ? '/farmer' : userType === 'consumer' ? '/consumer' : '/admin'
+        navigate(redirectLink);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -111,6 +123,13 @@ const Login = ({ onLogin }) => {
             Sign in to your {getUserTypeDisplay().toLowerCase()} account
           </p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-red-800 text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Login Form */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

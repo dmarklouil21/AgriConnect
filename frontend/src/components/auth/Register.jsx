@@ -14,12 +14,15 @@ import {
   CheckSquare,
   Loader2,
   CheckCircle,
-  FileText
+  FileText,
+  AlertCircle
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const Register = ({ onRegister }) => {
   const { userType } = useParams();
   const navigate = useNavigate();
+  const { register } = useAuth();
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -27,13 +30,14 @@ const Register = ({ onRegister }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: '',
+    phoneNumber: '',
     address: '',
     farmName: '',
     agreeToTerms: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
 
   // If no userType in URL, default to consumer
   const actualUserType = userType || 'consumer';
@@ -41,9 +45,13 @@ const Register = ({ onRegister }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+    setSubmitError('');
 
     // Validation
     const newErrors = {};
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
     if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
@@ -60,19 +68,39 @@ const Register = ({ onRegister }) => {
     }
 
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
-        id: Math.floor(Math.random() * 1000),
-        name: `${formData.firstName} ${formData.lastName}`,
+    try {
+      // Prepare data for API
+      const registrationData = {
         email: formData.email,
-        type: actualUserType,
-        avatar: (formData.firstName[0] + formData.lastName[0]).toUpperCase()
+        password: formData.password,
+        userType: actualUserType,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
       };
-      onRegister(userData);
+
+      // Add farmer-specific fields
+      if (actualUserType === 'farmer') {
+        registrationData.farmName = formData.farmName;
+      }
+
+      const result = await register(registrationData);
+
+      if (result.success) {
+        // Registration successful - redirect to dashboard
+        navigate(`/${actualUserType}`, { 
+          replace: true,
+          state: { message: 'Registration successful!' }
+        });
+      } else {
+        setSubmitError(result.error);
+      }
+    } catch(error) {
+      setSubmitError(error.message || 'Registration failed. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleChange = (e) => {
@@ -88,6 +116,10 @@ const Register = ({ onRegister }) => {
         ...prev,
         [name]: ''
       }));
+    }
+
+    if (submitError) {
+      setSubmitError('');
     }
   };
 
@@ -148,6 +180,11 @@ const Register = ({ onRegister }) => {
     }
   };
 
+  // Helper to get error for a field
+  const getFieldError = (fieldName) => {
+    return errors[fieldName];
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl w-full space-y-8">
@@ -175,6 +212,17 @@ const Register = ({ onRegister }) => {
             </div>
           </div>
         </div>
+
+        {/* Error Alert */}
+        {submitError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-red-800 font-medium">Registration failed</p>
+              <p className="text-red-700 text-sm mt-1">{submitError}</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Registration Form */}
@@ -255,8 +303,8 @@ const Register = ({ onRegister }) => {
                     <Phone className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="phone"
-                    name="phone"
+                    id="phoneNumber"
+                    name="phoneNumber"
                     type="tel"
                     value={formData.phone}
                     onChange={handleChange}
@@ -381,9 +429,12 @@ const Register = ({ onRegister }) => {
                   </span>
                 </label>
               </div>
-              {errors.agreeToTerms && (
-                <p className="text-sm text-red-600">{errors.agreeToTerms}</p>
+              {getFieldError('agreeToTerms') && (
+                <p className="text-sm text-red-600">{getFieldError('agreeToTerms')}</p>
               )}
+              {/* {errors.agreeToTerms && (
+                <p className="text-sm text-red-600">{errors.agreeToTerms}</p>
+              )} */}
 
               <button
                 type="submit"
