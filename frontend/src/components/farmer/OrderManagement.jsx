@@ -195,7 +195,7 @@ const OrderManagement = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <FilterIcon className="w-4 h-4" />
+              {/* <FilterIcon className="w-4 h-4" /> */}
               <span>
                 {filter.label} ({statusCounts[filter.id] || 0})
               </span>

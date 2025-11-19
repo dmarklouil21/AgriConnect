@@ -1,6 +1,6 @@
 // components/farmer/ProductManagement.jsx
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Package, AlertTriangle, CheckCircle, X, Info, RefreshCw, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Edit, Trash2, Package, AlertTriangle, CheckCircle, X, Info, RefreshCw, Loader2, Upload, Image as ImageIcon, Eye } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 const ProductManagement = () => {
@@ -365,6 +365,10 @@ const ProductCard = ({ product, onEdit, onUpdateStock, onDelete }) => (
 );
 
 const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText, loading }) => {
+  const [imagePreview, setImagePreview] = useState(product.images && product.images.length > 0 ? product.images[0] : '');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
   const handleChange = (field, value) => {
     onChange({
       ...product,
@@ -372,22 +376,193 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
     });
   };
 
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select a valid image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // In a real application, you would upload to your server/cloud storage
+      // For now, we'll create a local URL for preview and simulate upload
+      const imageUrl = URL.createObjectURL(file);
+      
+      // Update product with new image
+      const updatedImages = [imageUrl]; // Replace with actual uploaded URL in production
+      handleChange('images', updatedImages);
+      setImagePreview(imageUrl);
+      
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    handleChange('images', []);
+    setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImageUrlChange = (e) => {
+    const url = e.target.value;
+    setImagePreview(url);
+    handleChange('images', [url]);
+  };
+
+  const openFileSelector = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto scrollbar-hidden">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-gray-800">
             {title}
           </h3>
           <button
             onClick={onClose}
-            disabled={loading}
+            disabled={loading || isUploading}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+        
         <form onSubmit={onSubmit} className="space-y-4">
+          {/* Image Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Image
+            </label>
+            
+            {/* Image Preview */}
+            {imagePreview ? (
+              <div className="mb-4">
+                <div className="relative group">
+                  <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                    <img 
+                      src={imagePreview} 
+                      alt="Product preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      disabled={loading || isUploading}
+                      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Click the upload button to change image
+                </p>
+              </div>
+            ) : (
+              /* Upload Placeholder */
+              <div 
+                onClick={openFileSelector}
+                className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-green-500 transition-colors mb-4"
+              >
+                {isUploading ? (
+                  <div className="flex flex-col items-center space-y-2">
+                    <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+                    <p className="text-sm text-gray-600">Uploading image...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center space-y-2">
+                    <Upload className="w-8 h-8 text-gray-400" />
+                    <p className="text-sm text-gray-600">Click to upload image</p>
+                    <p className="text-xs text-gray-500">JPEG, PNG, WebP (max 5MB)</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* File Input (Hidden) */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={loading || isUploading}
+            />
+
+            {/* Upload Button */}
+            <button
+              type="button"
+              onClick={openFileSelector}
+              disabled={loading || isUploading}
+              className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+            >
+              <Upload className="w-4 h-4" />
+              <span>
+                {isUploading ? 'Uploading...' : (imagePreview ? 'Change Image' : 'Upload Image')}
+              </span>
+            </button>
+
+            {/* OR Separator */}
+            <div className="relative flex items-center my-4">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="flex-shrink mx-4 text-gray-500 text-sm">OR</span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
+
+            {/* Image URL Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Image URL
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <ImageIcon className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="url"
+                  value={imagePreview}
+                  onChange={handleImageUrlChange}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="https://example.com/image.jpg"
+                  disabled={loading || isUploading}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Enter image URL or upload a file
+              </p>
+            </div>
+          </div>
+
+          {/* Product Details Form */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
             <input
@@ -396,7 +571,7 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
               onChange={(e) => handleChange('name', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="Enter product name"
-              disabled={loading}
+              disabled={loading || isUploading}
               required
             />
           </div>
@@ -408,7 +583,7 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
               onChange={(e) => handleChange('category', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               required
-              disabled={loading}
+              disabled={loading || isUploading}
             >
               <option value="">Select category</option>
               <option value="Vegetables">Vegetables</option>
@@ -434,7 +609,7 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="0.00"
                 required
-                disabled={loading}
+                disabled={loading || isUploading}
               />
             </div>
             <div>
@@ -447,7 +622,7 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="0"
                 required
-                disabled={loading}
+                disabled={loading || isUploading}
               />
             </div>
           </div>
@@ -457,7 +632,7 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
             <select
               value={product.unit || 'kg'}
               onChange={(e) => handleChange('unit', e.target.value)}
-              disabled={loading}
+              disabled={loading || isUploading}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
               <option value="kg">Kilogram (kg)</option>
@@ -470,36 +645,51 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
             </select>
           </div>
 
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="organic"
+              checked={product.organic || false}
+              onChange={(e) => handleChange('organic', e.target.checked)}
+              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              disabled={loading || isUploading}
+            />
+            <label htmlFor="organic" className="text-sm text-gray-700">
+              Organic Product
+            </label>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               value={product.description}
               onChange={(e) => handleChange('description', e.target.value)}
               rows="3"
-              disabled={loading}
+              disabled={loading || isUploading}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="Describe your product..."
             />
           </div>
 
+          {/* Form Actions */}
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              disabled={loading}
-              className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              disabled={loading || isUploading}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || isUploading}
+              className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {/* {actionText} */}
-              {loading ? (
+              {loading || isUploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processing...</span>
+                  <span>{isUploading ? 'Uploading...' : 'Processing...'}</span>
                 </>
               ) : (
                 <span>{actionText}</span>
@@ -511,6 +701,154 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
     </div>
   );
 };
+
+// const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText, loading }) => {
+//   const handleChange = (field, value) => {
+//     onChange({
+//       ...product,
+//       [field]: value
+//     });
+//   };
+
+//   return (
+//     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+//       <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+//         <div className="flex items-center justify-between mb-4">
+//           <h3 className="text-xl font-semibold text-gray-800">
+//             {title}
+//           </h3>
+//           <button
+//             onClick={onClose}
+//             disabled={loading}
+//             className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+//           >
+//             <X className="w-5 h-5" />
+//           </button>
+//         </div>
+//         <form onSubmit={onSubmit} className="space-y-4">
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+//             <input
+//               type="text"
+//               value={product.name}
+//               onChange={(e) => handleChange('name', e.target.value)}
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+//               placeholder="Enter product name"
+//               disabled={loading}
+//               required
+//             />
+//           </div>
+          
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+//             <select
+//               value={product.category}
+//               onChange={(e) => handleChange('category', e.target.value)}
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+//               required
+//               disabled={loading}
+//             >
+//               <option value="">Select category</option>
+//               <option value="Vegetables">Vegetables</option>
+//               <option value="Fruits">Fruits</option>
+//               <option value="Dairy">Dairy</option>
+//               <option value="Grains">Grains</option>
+//               <option value="Herbs">Herbs</option>
+//               <option value="Meat">Meat</option>
+//               <option value="Eggs">Eggs</option>
+//               <option value="Honey">Honey</option>
+//             </select>
+//           </div>
+
+//           <div className="grid grid-cols-2 gap-4">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Price ($) *</label>
+//               <input
+//                 type="number"
+//                 step="0.01"
+//                 min="0"
+//                 value={product.price}
+//                 onChange={(e) => handleChange('price', e.target.value)}
+//                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+//                 placeholder="0.00"
+//                 required
+//                 disabled={loading}
+//               />
+//             </div>
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+//               <input
+//                 type="number"
+//                 min="0"
+//                 value={product.stock}
+//                 onChange={(e) => handleChange('stock', e.target.value)}
+//                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+//                 placeholder="0"
+//                 required
+//                 disabled={loading}
+//               />
+//             </div>
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+//             <select
+//               value={product.unit || 'kg'}
+//               onChange={(e) => handleChange('unit', e.target.value)}
+//               disabled={loading}
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+//             >
+//               <option value="kg">Kilogram (kg)</option>
+//               <option value="g">Gram (g)</option>
+//               <option value="lb">Pound (lb)</option>
+//               <option value="piece">Piece</option>
+//               <option value="dozen">Dozen</option>
+//               <option value="bunch">Bunch</option>
+//               <option value="pack">Pack</option>
+//             </select>
+//           </div>
+
+//           <div>
+//             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+//             <textarea
+//               value={product.description}
+//               onChange={(e) => handleChange('description', e.target.value)}
+//               rows="3"
+//               disabled={loading}
+//               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+//               placeholder="Describe your product..."
+//             />
+//           </div>
+
+//           <div className="flex space-x-3 pt-4">
+//             <button
+//               type="button"
+//               onClick={onClose}
+//               disabled={loading}
+//               className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+//             >
+//               Cancel
+//             </button>
+//             <button
+//               type="submit"
+//               className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+//             >
+//               {/* {actionText} */}
+//               {loading ? (
+//                 <>
+//                   <Loader2 className="w-4 h-4 animate-spin" />
+//                   <span>Processing...</span>
+//                 </>
+//               ) : (
+//                 <span>{actionText}</span>
+//               )}
+//             </button>
+//           </div>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// };
 
 const StockModal = ({ product, newStock, onStockChange, onSubmit, onClose, loading }) => {
   return (
