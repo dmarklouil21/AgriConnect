@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const API_BASE_URL = 'http://localhost:5000/api';agriconnect-api.up.railway.app
-const API_BASE_URL = 'https://agriconnect-api.up.railway.app';
+const API_BASE_URL = 'https://agriconnect-api.up.railway.app/api';
 
 // Create axios instance
 const api = axios.create({
