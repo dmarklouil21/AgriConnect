@@ -13,13 +13,12 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173", 
-    "https://agri-connect-coral.vercel.app" // Ensure this is your exact Vercel URL (no trailing slash)
+    "https://agri-connect-coral.vercel.app" 
   ],
-  // Added 'OPTIONS' to methods so preflight requests succeed
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
-  // Added 'x-auth-token' just in case your frontend uses it alongside Authorization
-  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"] 
+  // Added lowercase 'authorization' just to be 100% safe against strict proxies
+  allowedHeaders: ["Content-Type", "Authorization", "authorization", "x-auth-token"] 
 }));
 
 app.use(express.json());
@@ -29,8 +28,6 @@ app.use('/api/auth', require('./routes/auth'));
 
 // Farmers API Routes
 app.use('/api', require('./routes/products'));
-// This line serves local uploads (keep it for backward compatibility, 
-// but new uploads will go to Cloudinary)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api', require('./routes/orders'));
