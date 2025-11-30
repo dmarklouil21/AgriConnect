@@ -90,15 +90,23 @@ class ApiService {
   }
 
   async createProduct(productData) {
+    const token = localStorage.getItem('token');
     const response = await api.post('/farmer/products', productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
     });
     return response.data;
   }
 
   async updateProduct(productId, productData) {
+    const token = localStorage.getItem('token');
     const response = await api.put(`/farmer/products/${productId}`, productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+       }
     });
     return response.data;
   }
