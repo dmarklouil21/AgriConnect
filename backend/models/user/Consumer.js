@@ -19,7 +19,6 @@ const consumerSchema = new mongoose.Schema({
   phoneNumber: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
     match: [/^\+?[\d\s\-()]{10,}$/, 'Please enter a valid phone number']
   },
