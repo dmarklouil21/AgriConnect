@@ -19,7 +19,7 @@ const adminAuth = (req, res, next) => {
 // Get live dashboard counts
 router.get('/admin/reports/stats', auth, adminAuth, async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ userType: { $ne: 'admin' } });
+    const totalUsers = await User.countDocuments();
     const totalOrders = await Order.countDocuments();
     
     // Calculate Total Sales (Sum of all completed orders)

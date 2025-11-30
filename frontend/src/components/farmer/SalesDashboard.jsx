@@ -4,8 +4,6 @@ import {
   ShoppingCart, 
   Package, 
   Star, 
-  TrendingUp, 
-  TrendingDown, 
   RefreshCw, 
   Loader2,
   ArrowRight,
@@ -13,13 +11,16 @@ import {
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 
+// Safe fallback for images
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100' fill='%23f1f5f9'%3E%3Crect width='100' height='100' /%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3ENo Image%3C/text%3E%3C/svg%3E";
+const API_BASE_URL = 'http://localhost:5000';
+
 const SalesDashboard = () => {
-  // --- 1. Original State & Logic Restored ---
   const [stats, setStats] = useState({
-    totalSales: { value: '$0.00', change: '0%', isPositive: true },
-    monthlyOrders: { value: '0', change: '0%', isPositive: true },
-    activeProducts: { value: '0', change: '+0', isPositive: true },
-    customerRating: { value: '0.0/5', change: '+0.0', isPositive: true }
+    totalRevenue: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0
   });
   const [topProducts, setTopProducts] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
@@ -27,24 +28,23 @@ const SalesDashboard = () => {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Load dashboard data on component mount
   useEffect(() => {
     loadDashboardData();
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      // Only show full page loader on initial load
       if (!refreshLoading) setLoading(true);
       setError('');
       
-      const [statsData, topProductsData, activityData] = await Promise.all([
-        apiService.getDashboardStats(),
-        apiService.getTopProducts(4),
+      // Fetch Order Stats (Real Revenue) AND Top Products
+      const [orderStats, topProductsData, activityData] = await Promise.all([
+        apiService.getOrderStats(), // Returns { totalRevenue, totalOrders, ... }
+        apiService.getTopProducts(5),
         apiService.getRecentActivity(3)
       ]);
 
-      setStats(formatStats(statsData));
+      setStats(orderStats);
       setTopProducts(topProductsData || []);
       setRecentActivity(activityData || []);
     } catch (error) {
@@ -60,36 +60,6 @@ const SalesDashboard = () => {
     setRefreshLoading(true);
     await loadDashboardData();
   };
-
-  // Helper to format API data for the UI
-  const formatStats = (data) => {
-    if (!data) return stats;
-
-    return {
-      totalSales: {
-        value: `$${parseFloat(data.totalSales?.value || 0).toLocaleString()}`,
-        change: `${data.totalSales?.change || 0}%`,
-        isPositive: parseFloat(data.totalSales?.change || 0) >= 0
-      },
-      monthlyOrders: {
-        value: data.monthlyOrders?.value?.toString() || '0',
-        change: `${data.monthlyOrders?.change || 0}%`,
-        isPositive: parseFloat(data.monthlyOrders?.change || 0) >= 0
-      },
-      activeProducts: {
-        value: data.activeProducts?.value?.toString() || '0',
-        change: data.activeProducts?.change || '+0',
-        isPositive: true
-      },
-      customerRating: {
-        value: `${data.customerRating?.value || '0.0'}/5`,
-        change: data.customerRating?.change || '+0.0',
-        isPositive: true
-      }
-    };
-  };
-
-  // --- 2. New UI Rendering ---
 
   if (loading) {
     return (
@@ -121,7 +91,7 @@ const SalesDashboard = () => {
 
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
-          <TrendingDown className="w-5 h-5" />
+          <MoreHorizontal className="w-5 h-5" />
           {error}
         </div>
       )}
@@ -130,33 +100,25 @@ const SalesDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Total Revenue" 
-          value={stats.totalSales.value} 
-          change={stats.totalSales.change} 
-          isPositive={stats.totalSales.isPositive} 
+          value={`$${stats.totalRevenue?.toLocaleString() || '0.00'}`} 
           icon={DollarSign} 
           color="emerald" 
         />
         <StatCard 
-          title="Monthly Orders" 
-          value={stats.monthlyOrders.value} 
-          change={stats.monthlyOrders.change} 
-          isPositive={stats.monthlyOrders.isPositive} 
+          title="Total Orders" 
+          value={stats.totalOrders || 0} 
           icon={ShoppingCart} 
           color="blue" 
         />
         <StatCard 
-          title="Active Products" 
-          value={stats.activeProducts.value} 
-          change={stats.activeProducts.change} 
-          isPositive={stats.activeProducts.isPositive} 
+          title="Pending Orders" 
+          value={stats.pendingOrders || 0} 
           icon={Package} 
           color="orange" 
         />
         <StatCard 
-          title="Rating" 
-          value={stats.customerRating.value} 
-          change={stats.customerRating.change} 
-          isPositive={stats.customerRating.isPositive} 
+          title="Completed" 
+          value={stats.completedOrders || 0} 
           icon={Star} 
           color="purple" 
         />
@@ -165,12 +127,12 @@ const SalesDashboard = () => {
       {/* Main Content Split */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Top Products Table (Takes up 2 cols) */}
+        {/* Top Products Table */}
         <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
             <div>
               <h3 className="text-lg font-bold text-slate-800">Top Produce</h3>
-              <p className="text-sm text-slate-400">Highest earning items this month</p>
+              <p className="text-sm text-slate-400">Highest earning items</p>
             </div>
             <button className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
               View All <ArrowRight size={16} />
@@ -183,7 +145,7 @@ const SalesDashboard = () => {
                 <tr>
                   <th className="px-6 py-3 rounded-l-xl">Product</th>
                   <th className="px-6 py-3">Category</th>
-                  <th className="px-6 py-3">Sales</th>
+                  <th className="px-6 py-3">Sales Count</th> {/* Renamed for clarity */}
                   <th className="px-6 py-3 rounded-r-xl text-right">Revenue</th>
                 </tr>
               </thead>
@@ -191,21 +153,34 @@ const SalesDashboard = () => {
                 {topProducts.map((product, idx) => (
                   <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-700 group-hover:text-emerald-700 transition-colors">{product.name}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+                            <img 
+                                src={product.productImage ? `${API_BASE_URL}${product.productImage}` : PLACEHOLDER_IMAGE}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }}
+                            />
+                        </div>
+                        <div className="font-bold text-slate-700 group-hover:text-emerald-700 transition-colors">
+                            {product.name}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-bold uppercase tracking-wider">
                         {product.category || 'General'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 font-medium">
-                      {product.sales} {product.unit || 'units'}
+                    {/* UPDATED: Showing pure sales count number */}
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-sm">
+                        {product.sales}
+                      </span>
+                      <span className="text-xs text-slate-400 ml-2">{product.unit} sold</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="font-bold text-slate-800">{product.revenue}</div>
-                      <div className="text-xs text-slate-400">
-                         ${product.averagePrice?.toFixed(2) || '0.00'} avg
-                      </div>
                     </td>
                   </tr>
                 ))}
@@ -221,7 +196,7 @@ const SalesDashboard = () => {
           </div>
         </div>
 
-        {/* Recent Activity Timeline (Takes up 1 col) */}
+        {/* Recent Activity Timeline */}
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
             <h3 className="text-lg font-bold text-slate-800">Activity</h3>
@@ -236,8 +211,6 @@ const SalesDashboard = () => {
               <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-100" />
 
               {recentActivity.map((activity, idx) => {
-                // Determine icon and color based on activity type
-                // Note: Ensure your API returns 'type' or adapt this logic
                 const isOrder = activity.type === 'order' || activity.icon === 'ShoppingCart';
                 const isUpdate = activity.type === 'update' || activity.icon === 'Package';
                 const isMoney = activity.type === 'complete' || activity.icon === 'DollarSign';
@@ -291,7 +264,7 @@ const SalesDashboard = () => {
 };
 
 // --- Sub-component: Stat Card ---
-const StatCard = ({ title, value, change, isPositive, icon: Icon, color }) => {
+const StatCard = ({ title, value, icon: Icon, color }) => {
   const colorStyles = {
     emerald: "bg-emerald-50 text-emerald-600",
     blue: "bg-blue-50 text-blue-600",
@@ -300,19 +273,15 @@ const StatCard = ({ title, value, change, isPositive, icon: Icon, color }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group flex flex-col justify-between h-full">
       <div className="flex justify-between items-start mb-4">
-        <div className={`p-3 rounded-2xl ${colorStyles[color]} transition-transform group-hover:scale-110`}>
+        <div className={`p-4 rounded-2xl ${colorStyles[color]} transition-transform group-hover:scale-110`}>
           <Icon size={24} strokeWidth={2.5} />
-        </div>
-        <div className={`flex items-center gap-1 text-sm font-bold px-2 py-1 rounded-lg ${isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-          {change}
         </div>
       </div>
       <div>
         <h4 className="text-slate-500 text-sm font-bold tracking-wide uppercase mb-1">{title}</h4>
-        <p className="text-3xl font-extrabold text-slate-800">{value}</p>
+        <p className="text-3xl font-extrabold text-slate-800 tracking-tight">{value}</p>
       </div>
     </div>
   );

@@ -25,8 +25,21 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Invalid user type' });
     }
 
-    // Create new user
-    user = new User({ email, password, userType });
+    // --- CHANGE 1: Determine Initial Status ---
+    // Farmers must be approved. Consumers are auto-active. Admins usually auto-active (or pending depending on your security preference)
+    let initialStatus = 'Active';
+    if (userType === 'farmer') {
+      initialStatus = 'Pending';
+    }
+
+    // Create new user with specific status
+    user = new User({ 
+      email, 
+      password, 
+      userType, 
+      status: initialStatus // Explicitly set status
+    });
+    
     await user.save();
 
     let userProfile;
@@ -57,8 +70,6 @@ router.post('/register', async (req, res) => {
         break;
 
       case 'admin':
-        // Only allow admin creation if it's from another admin or during setup
-        // You might want to add additional security here
         userProfile = new Admin({
           user: user._id,
           firstName: profileData.firstName,
@@ -74,7 +85,22 @@ router.post('/register', async (req, res) => {
       await userProfile.save();
     }
 
-    // Generate token
+    // --- CHANGE 2: Handle Response based on Status ---
+    
+    // If pending, do NOT return token. User cannot login yet.
+    if (initialStatus === 'Pending') {
+      return res.status(201).json({
+        message: 'Registration successful! Your account is pending approval from an administrator.',
+        user: {
+          id: user._id,
+          email: user.email,
+          userType: user.userType,
+          status: 'Pending'
+        }
+      });
+    }
+
+    // If Active, generate token immediately
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET,
@@ -86,14 +112,15 @@ router.post('/register', async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
+        status: 'Active'
       }
     });
+
   } catch (error) {
-    // If user was created but profile failed, delete the user
-    // if (user) {
-    //   await User.findByIdAndDelete(user._id);
-    // }
+    // Cleanup if profile creation failed
+    // if (user) await User.findByIdAndDelete(user._id);
+    
     res.status(500).json({ message: 'Server error', error: error.message });
     console.error("Registration Error:", error);
   }
@@ -116,9 +143,22 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Account not supported 
+    // Account not supported for this portal
     if (userType !== user.userType) {
       return res.status(400).json({ message: 'Account not supported for this portal' });
+    }
+
+    // --- CHANGE 3: Check User Status ---
+    if (user.status !== 'Active') {
+        if (user.status === 'Pending') {
+            return res.status(403).json({ message: 'Your account is currently pending approval. Please wait for admin verification.' });
+        }
+        if (user.status === 'Suspended') {
+            return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
+        }
+        if (user.status === 'Rejected') {
+            return res.status(403).json({ message: 'Your account application was rejected.' });
+        }
     }
 
     // Generate token
@@ -133,7 +173,8 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         email: email,
-        userType: user.userType
+        userType: user.userType,
+        status: user.status
       }
     });
   } catch (error) {
@@ -164,7 +205,8 @@ router.get('/me', auth, async (req, res) => {
       user: {
         id: req.user._id,
         email: req.user.email,
-        userType: req.user.userType
+        userType: req.user.userType,
+        status: req.user.status // It's helpful to send status back too
       },
       profile: profile
     });

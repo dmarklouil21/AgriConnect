@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../../services/api';
-import { Loader2, Search, Filter, Eye, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import { 
+  Loader2, Search, Eye, CheckCircle, XCircle, AlertTriangle, 
+  Clock, RefreshCw, Package, ArrowUpRight, Filter, X
+} from 'lucide-react';
+
+// Safe fallback for images
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100' fill='%23f1f5f9'%3E%3Crect width='100' height='100' /%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3ENo Image%3C/text%3E%3C/svg%3E";
 
 const ProductMonitoring = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshLoading, setRefreshLoading] = useState(false);
   
   // Filters
-  const [filterStatus, setFilterStatus] = useState('all'); // all, Pending, Approved, Rejected
+  const [filterStatus, setFilterStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Modals
@@ -23,26 +30,27 @@ const ProductMonitoring = () => {
 
   useEffect(() => {
     loadProducts();
-  }, [filterStatus]); // Reload when tab changes
+  }, [filterStatus]); 
 
   const loadProducts = async () => {
-    setLoading(true);
+    if (!refreshLoading) setLoading(true);
     try {
       const data = await apiService.getAllProducts({ 
           status: filterStatus, 
           search: searchTerm 
       });
-      setProducts(data);
+      setProducts(data || []);
     } catch (error) {
       console.error("Failed to load products", error);
     } finally {
       setLoading(false);
+      setRefreshLoading(false);
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    loadProducts();
+  const handleRefresh = async () => {
+    setRefreshLoading(true);
+    await loadProducts();
   };
 
   const handleStatusChange = async () => {
@@ -59,7 +67,6 @@ const ProductMonitoring = () => {
     try {
       await apiService.updateProductStatus(actionProduct.id, newStatus, rejectionReason);
       
-      // Update local state
       setProducts(products.map(p => 
         p.id === actionProduct.id 
           ? { ...p, status: newStatus, rejectionReason: newStatus === 'Rejected' ? rejectionReason : '' } 
@@ -87,140 +94,253 @@ const ProductMonitoring = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Approved': return 'bg-green-100 text-green-800';
-      case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'Rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Approved': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'Pending': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'Rejected': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
   const getActionDetails = () => {
     switch (actionType) {
-      case 'approve': return { title: 'Approve Product', message: `Approve "${actionProduct?.name}"?`, btn: 'Approve', color: 'bg-green-600', input: false };
-      case 'reject': return { title: 'Reject Product', message: `Reject "${actionProduct?.name}"?`, btn: 'Reject', color: 'bg-red-600', input: true };
-      case 'pending': return { title: 'Set Pending', message: `Set "${actionProduct?.name}" to Pending?`, btn: 'Set Pending', color: 'bg-yellow-600', input: false };
+      case 'approve': return { title: 'Approve Product', message: `Allow "${actionProduct?.name}" to be sold on the marketplace?`, btn: 'Approve', color: 'bg-emerald-600', input: false };
+      case 'reject': return { title: 'Reject Product', message: `Deny "${actionProduct?.name}"? Please provide a reason.`, btn: 'Reject', color: 'bg-red-600', input: true };
+      case 'pending': return { title: 'Suspend Product', message: `Set "${actionProduct?.name}" back to Pending review?`, btn: 'Suspend', color: 'bg-amber-600', input: false };
       default: return { title: 'Confirm', message: 'Proceed?', btn: 'Confirm', color: 'bg-blue-600' };
     }
   };
 
+  if (loading) return <div className="flex justify-center h-96 items-center"><Loader2 className="w-10 h-10 animate-spin text-purple-600"/></div>;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Product Monitoring</h2>
-          <p className="text-gray-600">Review and manage platform products</p>
+          <h1 className="text-3xl font-bold text-slate-800">Product Monitoring</h1>
+          <p className="text-slate-500 mt-1">Review, approve, or reject farmer product listings.</p>
         </div>
+        <button 
+            onClick={handleRefresh} 
+            disabled={refreshLoading}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 font-medium hover:border-purple-500 hover:text-purple-600 transition-colors flex items-center gap-2"
+        >
+            <RefreshCw className={`w-4 h-4 ${refreshLoading ? 'animate-spin' : ''}`}/>
+            <span>Sync</span>
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-xl border flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="flex gap-2">
-            {['all', 'Pending', 'Approved', 'Rejected'].map(status => (
-                <button 
+      {/* Search & Filter Toolbar */}
+      <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center gap-4">
+        
+        {/* Search Bar */}
+        <div className="relative w-full md:w-80 flex-shrink-0 ml-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"/>
+            <input 
+                type="text" 
+                placeholder="Search products..." 
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && loadProducts()}
+            />
+        </div>
+
+        {/* Divider */}
+        <div className="hidden md:block w-px h-8 bg-slate-200"></div>
+
+        {/* Status Tabs (Underline Style) */}
+        <div className="w-full overflow-x-auto no-scrollbar flex items-center gap-2">
+            {['all', 'Pending', 'Approved', 'Rejected'].map((status) => (
+                <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${filterStatus === status ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                    className={`px-5 py-2.5 rounded-t-xl text-sm font-bold whitespace-nowrap transition-all relative ${
+                        filterStatus === status 
+                        ? 'text-purple-700 bg-purple-50/50' 
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    }`}
                 >
-                    {status}
+                    {status === 'all' ? 'All Products' : status}
+                    {filterStatus === status && (
+                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-purple-600 rounded-t-full" />
+                    )}
                 </button>
             ))}
         </div>
-        <form onSubmit={handleSearch} className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4"/>
-            <input 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search products..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-        </form>
       </div>
 
       {/* Products Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        {loading ? (
-            <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-green-600 w-8 h-8"/></div>
-        ) : (
-            <div className="overflow-x-auto">
-            <table className="w-full">
-                <thead className="bg-gray-50">
-                <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Farmer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                {products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-xs text-gray-500">Stock: {product.stock} {product.unit}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{product.farmer}</td>
-                    <td className="px-6 py-4"><span className="px-2 py-1 bg-gray-100 rounded text-xs">{product.category}</span></td>
-                    <td className="px-6 py-4 font-semibold text-gray-900">${product.price}</td>
-                    <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(product.status)}`}>
-                        {product.status}
-                        </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium flex gap-2">
-                        <button onClick={() => openViewModal(product)} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Eye className="w-4 h-4"/></button>
-                        {product.status === 'Pending' && (
-                            <>
-                                <button onClick={() => openConfirmModal(product, 'approve')} className="text-green-600 hover:bg-green-50 p-1 rounded"><CheckCircle className="w-4 h-4"/></button>
-                                <button onClick={() => openConfirmModal(product, 'reject')} className="text-red-600 hover:bg-red-50 p-1 rounded"><XCircle className="w-4 h-4"/></button>
-                            </>
-                        )}
-                        {product.status === 'Approved' && (
-                             <button onClick={() => openConfirmModal(product, 'pending')} className="text-yellow-600 hover:bg-yellow-50 p-1 rounded" title="Suspend"><Clock className="w-4 h-4"/></button>
-                        )}
-                    </td>
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="overflow-x-auto">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+                    <tr>
+                        <th className="px-6 py-4">Product Details</th>
+                        <th className="px-6 py-4">Farmer</th>
+                        <th className="px-6 py-4">Price / Stock</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
-                ))}
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {products.map((product) => (
+                        <tr key={product.id} className="hover:bg-slate-50/80 transition-colors group">
+                            {/* Product Info */}
+                            <td className="px-6 py-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
+                                        <img 
+                                            src={product.images?.[0] ? `http://localhost:5000${product.images[0]}` : PLACEHOLDER_IMAGE}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => e.target.src = PLACEHOLDER_IMAGE}
+                                        />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-800">{product.name}</div>
+                                        <div className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full w-fit mt-1">{product.category}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            {/* Farmer Info */}
+                            <td className="px-6 py-4">
+                                <div className="text-sm font-medium text-slate-700">{product.farmer}</div>
+                            </td>
+
+                            {/* Price/Stock */}
+                            <td className="px-6 py-4">
+                                <div className="font-bold text-slate-800">${product.price}</div>
+                                <div className="text-xs text-slate-500">{product.stock} {product.unit} left</div>
+                            </td>
+
+                            {/* Status */}
+                            <td className="px-6 py-4">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(product.status)}`}>
+                                    {product.status === 'Pending' && <Clock size={12} className="mr-1"/>}
+                                    {product.status === 'Approved' && <CheckCircle size={12} className="mr-1"/>}
+                                    {product.status === 'Rejected' && <XCircle size={12} className="mr-1"/>}
+                                    {product.status}
+                                </span>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                    <button 
+                                        onClick={() => openViewModal(product)} 
+                                        className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-purple-100 hover:text-purple-600 transition-colors"
+                                        title="View Details"
+                                    >
+                                        <Eye size={16}/>
+                                    </button>
+                                    
+                                    {product.status === 'Pending' && (
+                                        <>
+                                            <button 
+                                                onClick={() => openConfirmModal(product, 'approve')} 
+                                                className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors"
+                                                title="Approve"
+                                            >
+                                                <CheckCircle size={16}/>
+                                            </button>
+                                            <button 
+                                                onClick={() => openConfirmModal(product, 'reject')} 
+                                                className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                                                title="Reject"
+                                            >
+                                                <XCircle size={16}/>
+                                            </button>
+                                        </>
+                                    )}
+                                    {product.status === 'Approved' && (
+                                        <button 
+                                            onClick={() => openConfirmModal(product, 'pending')} 
+                                            className="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition-colors"
+                                            title="Suspend / Re-evaluate"
+                                        >
+                                            <AlertTriangle size={16}/>
+                                        </button>
+                                    )}
+                                </div>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
-            {products.length === 0 && <div className="p-12 text-center text-gray-500">No products found.</div>}
-            </div>
-        )}
+            {products.length === 0 && (
+                <div className="text-center py-20 text-slate-400">
+                    <Package size={48} className="mx-auto mb-4 opacity-50"/>
+                    <p>No products found matching your criteria.</p>
+                </div>
+            )}
+        </div>
       </div>
 
-      {/* View Modal */}
+      {/* View Details Modal */}
       {showViewModal && selectedProduct && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold">{selectedProduct.name}</h3>
-                <button onClick={() => setShowViewModal(false)} className="text-2xl text-gray-400 hover:text-gray-600">×</button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-0 max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95">
+            {/* Modal Header/Image */}
+            <div className="relative h-56 bg-slate-100">
+                <img 
+                    src={selectedProduct.images?.[0] ? `http://localhost:5000${selectedProduct.images[0]}` : PLACEHOLDER_IMAGE} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => e.target.src = PLACEHOLDER_IMAGE}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <button 
+                    onClick={() => setShowViewModal(false)} 
+                    className="absolute top-4 right-4 p-2 bg-black/30 text-white rounded-full hover:bg-black/50 backdrop-blur-md transition-colors"
+                >
+                    <X size={20}/>
+                </button>
+                <div className="absolute bottom-4 left-6 text-white">
+                    <div className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">{selectedProduct.category}</div>
+                    <h2 className="text-2xl font-bold">{selectedProduct.name}</h2>
+                </div>
             </div>
             
-            <div className="space-y-4">
-                {/* Image Placeholder */}
-                <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                    {selectedProduct.images?.[0] ? 
-                        <img src={`http://localhost:5000${selectedProduct.images[0]}`} className="h-full w-full object-cover rounded-lg"/> : 
-                        <span className="text-4xl">🌱</span>
-                    }
+            <div className="p-6 space-y-6">
+                <div className="flex gap-4">
+                    <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span className="text-xs text-slate-400 font-bold uppercase">Price</span>
+                        <p className="text-lg font-bold text-slate-800">${selectedProduct.price}</p>
+                    </div>
+                    <div className="flex-1 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span className="text-xs text-slate-400 font-bold uppercase">Stock</span>
+                        <p className="text-lg font-bold text-slate-800">{selectedProduct.stock} {selectedProduct.unit}</p>
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><span className="text-gray-500 block">Category</span>{selectedProduct.category}</div>
-                    <div><span className="text-gray-500 block">Price</span>${selectedProduct.price} / {selectedProduct.unit}</div>
-                    <div><span className="text-gray-500 block">Farmer</span>{selectedProduct.farmer}</div>
-                    <div><span className="text-gray-500 block">Status</span><span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(selectedProduct.status)}`}>{selectedProduct.status}</span></div>
+                <div>
+                    <h4 className="font-bold text-slate-800 mb-2">Description</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed">{selectedProduct.description || "No description provided."}</p>
                 </div>
 
-                <div><span className="text-gray-500 block text-sm">Description</span><p className="text-gray-700">{selectedProduct.description}</p></div>
+                <div className="border-t border-slate-100 pt-4">
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500">Farmer:</span>
+                        <span className="font-medium text-purple-700">{selectedProduct.farmer}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm mt-2">
+                        <span className="text-slate-500">Current Status:</span>
+                        <span className={`font-bold ${
+                            selectedProduct.status === 'Approved' ? 'text-emerald-600' : 
+                            selectedProduct.status === 'Rejected' ? 'text-red-600' : 'text-amber-600'
+                        }`}>{selectedProduct.status}</span>
+                    </div>
+                </div>
 
                 {selectedProduct.rejectionReason && (
-                    <div className="bg-red-50 p-3 rounded-lg border border-red-200">
-                        <span className="text-red-800 font-medium block text-xs uppercase">Rejection Reason</span>
-                        <p className="text-red-700 text-sm">{selectedProduct.rejectionReason}</p>
+                    <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex gap-3">
+                        <AlertTriangle className="text-red-500 w-5 h-5 flex-shrink-0" />
+                        <div>
+                            <span className="text-xs font-bold text-red-800 uppercase">Rejection Reason</span>
+                            <p className="text-sm text-red-700 mt-1">{selectedProduct.rejectionReason}</p>
+                        </div>
                     </div>
                 )}
             </div>
@@ -230,25 +350,43 @@ const ProductMonitoring = () => {
 
       {/* Confirmation Modal */}
       {showConfirmModal && actionProduct && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-2">{getActionDetails().title}</h3>
-            <p className="text-gray-600 mb-4">{getActionDetails().message}</p>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-md text-center shadow-2xl animate-in zoom-in-95">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                actionType === 'approve' ? 'bg-emerald-100 text-emerald-600' : 
+                actionType === 'reject' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+            }`}>
+                {actionType === 'approve' ? <CheckCircle size={32}/> : 
+                 actionType === 'reject' ? <XCircle size={32}/> : <Clock size={32}/>}
+            </div>
+            
+            <h3 className="text-2xl font-bold text-slate-800 mb-2">{getActionDetails().title}</h3>
+            <p className="text-slate-500 mb-6">{getActionDetails().message}</p>
             
             {getActionDetails().input && (
                 <textarea 
-                    className="w-full border rounded-lg p-3 mb-4 focus:ring-2 focus:ring-red-500" 
+                    className="w-full border border-slate-200 rounded-xl p-4 mb-6 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50" 
                     rows="3" 
-                    placeholder="Reason for rejection..."
+                    placeholder="Enter reason for rejection..."
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
                 />
             )}
 
             <div className="flex gap-3">
-                <button onClick={() => setShowConfirmModal(false)} disabled={isSubmitting} className="flex-1 bg-gray-100 py-2 rounded-lg">Cancel</button>
-                <button onClick={handleStatusChange} disabled={isSubmitting || (getActionDetails().input && !rejectionReason.trim())} className={`flex-1 text-white py-2 rounded-lg flex justify-center items-center ${getActionDetails().color}`}>
-                    {isSubmitting ? <Loader2 className="animate-spin w-4 h-4"/> : getActionDetails().btn}
+                <button 
+                    onClick={() => setShowConfirmModal(false)} 
+                    disabled={isSubmitting} 
+                    className="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={handleStatusChange} 
+                    disabled={isSubmitting || (getActionDetails().input && !rejectionReason.trim())} 
+                    className={`flex-1 text-white py-3 rounded-xl font-bold flex justify-center items-center shadow-lg transition-all hover:scale-[1.02] ${getActionDetails().color}`}
+                >
+                    {isSubmitting ? <Loader2 className="animate-spin"/> : getActionDetails().btn}
                 </button>
             </div>
           </div>

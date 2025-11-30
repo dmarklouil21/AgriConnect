@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-// Preserving your specific imports
 const Order = require('../models/farmer/Order');
 const Product = require('../models/farmer/Product');
 const Farmer = require('../models/user/Farmer');
@@ -8,23 +7,18 @@ const Consumer = require('../models/user/Consumer');
 const auth = require('../middleware/auth');
 
 // 1. Get all orders (Query Params)
-// This is fine here because it doesn't use a path parameter
 router.get('/farmer/orders', auth, async (req, res) => {
   try {
-    // 1. Find the Farmer Profile ID for the logged-in user
     const farmerProfile = await Farmer.findOne({ user: req.user._id });
     if (!farmerProfile) return res.status(404).json({ message: 'Farmer profile not found' });
 
     const { status } = req.query;
     
-    // 2. Find Orders where 'farmer' matches this profile ID
     let query = { farmer: farmerProfile._id };
     
-    // Map frontend 'accepted' to backend 'Processing' if needed, or keep simple
+    // Map specific frontend tabs to schema statuses if necessary
     if (status && status !== 'all') {
-        // Simple mapping example if your frontend uses lowercase
-        const map = { 'accepted': 'Processing', 'ready': 'Shipped', 'completed': 'Delivered', 'pending': 'Pending' };
-        query.status = map[status] || status; 
+        query.status = status; 
     }
 
     const orders = await Order.find(query)
@@ -32,10 +26,10 @@ router.get('/farmer/orders', auth, async (req, res) => {
         path: 'items.product',
         select: 'productImage name category unit'
       })
-      .populate('user', 'firstName lastName email') // Populate Buyer info from User model
+      .populate('user', 'firstName lastName email') 
       .sort({ createdAt: -1 });
 
-    // 3. Map to frontend structure
+    // Map to frontend structure
     const formattedOrders = orders.map(order => ({
         _id: order._id,
         orderNumber: order.orderNumber,
@@ -43,13 +37,12 @@ router.get('/farmer/orders', auth, async (req, res) => {
         status: order.status,
         totalAmount: order.totalAmount,
         consumer: {
-            // Fallback to shipping address name if user profile is missing
             firstName: order.user?.firstName || order.shippingAddress.fullName.split(' ')[0],
             lastName: order.user?.lastName || '',
             email: order.user?.email || 'N/A',
             phone: order.shippingAddress.phone
         },
-        shippingAddress: order.shippingAddress, // Contains address, city, zip
+        shippingAddress: order.shippingAddress,
         items: order.items
     }));
 
@@ -61,8 +54,7 @@ router.get('/farmer/orders', auth, async (req, res) => {
   }
 });
 
-// 2. Get order statistics (MOVED UP)
-// MUST be before /:id
+// 2. Get order statistics
 router.get('/farmer/orders/stats', auth, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
@@ -74,9 +66,17 @@ router.get('/farmer/orders/stats', auth, async (req, res) => {
       return res.status(404).json({ message: 'Farmer profile not found' });
     }
 
-    // Assuming you have a static method getFarmerStats on Order model
-    // If not, you might need to implement the aggregation here manually
-    const stats = await Order.getFarmerStats ? await Order.getFarmerStats(farmer._id) : {};
+    // Basic stats
+    const totalOrders = await Order.countDocuments({ farmer: farmer._id });
+    const completedOrders = await Order.countDocuments({ farmer: farmer._id, status: 'Delivered' });
+    const pendingOrders = await Order.countDocuments({ farmer: farmer._id, status: 'Pending' });
+    
+    // Calculate Total Revenue (Only from Delivered orders)
+    const revenueAgg = await Order.aggregate([
+        { $match: { farmer: farmer._id, status: 'Delivered' } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+    const totalRevenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
 
     const recentOrders = await Order.find({ farmer: farmer._id })
       .sort({ createdAt: -1 })
@@ -85,7 +85,10 @@ router.get('/farmer/orders/stats', auth, async (req, res) => {
       .select('orderNumber totalAmount status createdAt');
 
     res.json({
-      ...stats,
+      totalOrders,
+      completedOrders,
+      pendingOrders,
+      totalRevenue, 
       recentOrders
     });
   } catch (error) {
@@ -94,8 +97,7 @@ router.get('/farmer/orders/stats', auth, async (req, res) => {
   }
 });
 
-// 3. Get order counts by status (MOVED UP)
-// MUST be before /:id
+// 3. Get order counts by status
 router.get('/farmer/orders/counts', auth, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
@@ -119,16 +121,15 @@ router.get('/farmer/orders/counts', auth, async (req, res) => {
 
     const statusCounts = {
       all: 0,
-      pending: 0,
-      accepted: 0,
-      preparing: 0,
-      ready: 0,
-      completed: 0,
-      declined: 0
+      Pending: 0,
+      Processing: 0,
+      Shipped: 0,
+      Delivered: 0,
+      Cancelled: 0,
+      Declined: 0 // Include Declined if used
     };
 
     counts.forEach(item => {
-      // Ensure status key exists or handle unknown statuses
       if (item._id) {
           statusCounts[item._id] = item.count;
       }
@@ -142,8 +143,7 @@ router.get('/farmer/orders/counts', auth, async (req, res) => {
   }
 });
 
-// 4. Get single order details (MOVED DOWN)
-// This captures /:id, so it must come AFTER specific paths like /stats or /counts
+// 4. Get single order details
 router.get('/farmer/orders/:id', auth, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
@@ -167,8 +167,7 @@ router.get('/farmer/orders/:id', auth, async (req, res) => {
     }
 
     const orderObj = order.toObject();
-    // Ensure formattedAddress exists if the virtual didn't trigger
-    orderObj.formattedAddress = order.formattedAddress || (order.deliveryAddress ? `${order.deliveryAddress.street}, ${order.deliveryAddress.city}` : 'N/A');
+    orderObj.formattedAddress = order.shippingAddress ? `${order.shippingAddress.address}, ${order.shippingAddress.city}` : 'N/A';
 
     res.json(orderObj);
   } catch (error) {
@@ -204,8 +203,11 @@ router.patch('/farmer/orders/:id/status', auth, async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Stock Logic: Reserve stock on Accept
-    if (status === 'accepted') {
+    const previousStatus = order.status;
+
+    // --- LOGIC 1: Stock Reservation (Pending -> Processing) ---
+    if (status === 'Processing' && previousStatus === 'Pending') {
+      // Check stock availability first
       for (const item of order.items) {
         const product = await Product.findById(item.product);
         if (!product) return res.status(400).json({ message: `Product ${item.name} no longer exists` });
@@ -213,26 +215,36 @@ router.patch('/farmer/orders/:id/status', auth, async (req, res) => {
           return res.status(400).json({ message: `Insufficient stock for ${item.name}.` });
         }
       }
-
+      // Deduct stock
       for (const item of order.items) {
         await Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.quantity } });
       }
     }
 
-    // Stock Logic: Return stock on Decline/Cancel
-    if ((status === 'declined' || status === 'cancelled') && 
-        (order.status === 'accepted' || order.status === 'preparing')) {
+    // --- LOGIC 2: Stock Return (Processing/Shipped -> Cancelled/Declined) ---
+    if ((status === 'Cancelled' || status === 'Declined') && 
+        (previousStatus === 'Processing' || previousStatus === 'Shipped')) {
       for (const item of order.items) {
         await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
       }
     }
 
-    // Assuming your Order model has an updateStatus method, otherwise use standard save
+    // --- LOGIC 3: Sales Analytics (Any -> Delivered) ---
+    // This increments the 'salesCount' in the Product model
+    if ((status === 'Delivered' || status === 'Completed') && previousStatus !== 'Delivered') {
+        for (const item of order.items) {
+            await Product.findByIdAndUpdate(item.product, { 
+                $inc: { salesCount: item.quantity } 
+            });
+        }
+    }
+
+    // Update Order Record
     if (order.updateStatus) {
         await order.updateStatus(status, notes);
     } else {
         order.status = status;
-        if(notes) order.farmerNotes = notes; // Adjust field name if different
+        if(notes) order.farmerNotes = notes;
         await order.save();
     }
 
@@ -241,7 +253,7 @@ router.patch('/farmer/orders/:id/status', auth, async (req, res) => {
       .populate('items.product', 'name category unit images');
 
     const orderObj = updatedOrder.toObject();
-    orderObj.formattedAddress = updatedOrder.formattedAddress || (updatedOrder.deliveryAddress ? `${updatedOrder.deliveryAddress.street}, ${updatedOrder.deliveryAddress.city}` : 'N/A');
+    orderObj.formattedAddress = updatedOrder.shippingAddress ? `${updatedOrder.shippingAddress.address}, ${updatedOrder.shippingAddress.city}` : 'N/A';
 
     res.json({
       message: `Order ${status} successfully`,

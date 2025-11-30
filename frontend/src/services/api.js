@@ -84,9 +84,9 @@ class ApiService {
   }
 
   async getFarmerProduct(productId) {
-  const response = await api.get(`/farmer/products/${productId}`);
-  return response.data;
-}
+    const response = await api.get(`/farmer/products/${productId}`);
+    return response.data;
+  }
 
   async createProduct(productData) {
     const response = await api.post('/farmer/products', productData, {
@@ -164,23 +164,34 @@ class ApiService {
 
   // Dashboard endpoints
   async getDashboardStats() {
-    const response = await api.get('/farmer/dashboard/stats');
+    const response = await api.get('/farmer/products/stats'); // Updated to point to product stats which serves as dashboard stats
     return response.data;
   }
 
-  async getTopProducts(limit = 5, period = 'month') {
-    const response = await api.get(`/farmer/dashboard/top-products?limit=${limit}&period=${period}`);
+  // UPDATED: Now points to the correct route for Top Produce
+  async getTopProducts(limit = 5) {
+    const response = await api.get(`/farmer/products/top?limit=${limit}`);
     return response.data;
   }
 
   async getRecentActivity(limit = 10) {
-    const response = await api.get(`/farmer/dashboard/recent-activity?limit=${limit}`);
-    return response.data;
+    // Note: Ensure you have a backend route for this, currently it might fail if not implemented
+    // Often dashboard stats covers this, or you need a specific activity log endpoint
+    try {
+        const response = await api.get(`/farmer/dashboard/recent-activity?limit=${limit}`);
+        return response.data;
+    } catch (error) {
+        return []; // Fallback if endpoint doesn't exist yet
+    }
   }
 
   async getSalesChart(period = 'month') {
-    const response = await api.get(`/farmer/dashboard/sales-chart?period=${period}`);
-    return response.data;
+    try {
+        const response = await api.get(`/farmer/dashboard/sales-chart?period=${period}`);
+        return response.data;
+    } catch (error) {
+        return [];
+    }
   }
 
   async getDashboardOverview() {
@@ -307,8 +318,6 @@ class ApiService {
   }
 
   async generateReport(type, name) {
-    // const response = await api.post('/admin/reports/generate', reportData);
-    // return response.data;
     const response = await api.post('/admin/reports/generate', {type, name}); 
     return response.data;
   }

@@ -1,4 +1,3 @@
-// components/portals/AdminPortal.jsx
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -8,36 +7,35 @@ import ProductMonitoring from '../admin/ProductMonitoring';
 import ReportGeneration from '../admin/ReportGeneration';
 import Announcements from '../admin/Announcements';
 
-const AdminPortal = ({ }) => {
+const AdminPortal = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Derive active tab from URL
+  // Derive active tab from URL to keep UI in sync with Route
   const getActiveTabFromPath = () => {
     const path = location.pathname;
-    if (path.includes('/users')) return 'users';
     if (path.includes('/products')) return 'products';
     if (path.includes('/reports')) return 'reports';
     if (path.includes('/announcements')) return 'announcements';
-    return 'users'; // default tab
+    return 'users';
   };
 
   const [activeTab, setActiveTab] = useState(getActiveTabFromPath());
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    navigate(`/admin/${tab}`);
+    navigate(`/admin/${tab === 'users' ? '' : tab}`);
   };
 
   const handleLogout = () => {
-    const type = user?.userType || 'consumer';
-    navigate(`/${type}`);
+    const type = user?.userType || 'admin';
+    navigate(`/login/${type}`);
     logout();
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-purple-100 selection:text-purple-900">
       <AdminHeader 
         onLogout={handleLogout}
         activeTab={activeTab} 
@@ -45,7 +43,12 @@ const AdminPortal = ({ }) => {
         user={user}
       />
       
-      <main className="container mx-auto px-4 py-6">
+      {/* Main Content Container 
+        - max-w-7xl: Prevents content from stretching too wide on large screens
+        - px-4 lg:px-6: Consistent horizontal padding
+        - py-8: Vertical breathing room
+      */}
+      <main className="container mx-auto px-4 lg:px-6 py-8 max-w-7xl">
         <Routes>
           <Route path="/" element={<UserManagement />} />
           <Route path="/users" element={<UserManagement />} />
