@@ -9,46 +9,41 @@ connectDB();
 
 const app = express();
 
-// Middleware
+// --- FIXED CORS MIDDLEWARE ---
 app.use(cors({
-  origin: ["http://localhost:5173", "https://agri-connect-coral.vercel.app"], // Add your Vercel URL here
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  origin: [
+    "http://localhost:5173", 
+    "https://agri-connect-coral.vercel.app" // Ensure this is your exact Vercel URL (no trailing slash)
+  ],
+  // Added 'OPTIONS' to methods so preflight requests succeed
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"] // Explicitly allow Authorization
+  // Added 'x-auth-token' just in case your frontend uses it alongside Authorization
+  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"] 
 }));
+
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 
 // Farmers API Routes
-// Product Management
 app.use('/api', require('./routes/products'));
+// This line serves local uploads (keep it for backward compatibility, 
+// but new uploads will go to Cloudinary)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Order Management
 app.use('/api', require('./routes/orders'));
-
-// Dashboard
 app.use('/api', require('./routes/dashboard'));
 
 // Consumers API Routes
-// Consumer Product Browsing
 app.use('/api', require('./routes/consumer/productBrowsing'));
-
-// Consumer Cart Management
 app.use('/api', require('./routes/consumer/cart'));
-
-// Consumer Order Management
 app.use('/api', require('./routes/consumer/orders'));
 
 // Admin API Routes
-// User Management
 app.use('/api', require('./routes/admin/users'));
-
-// Product Monitoring
 app.use('/api', require('./routes/admin/products'));
-
 app.use('/api', require('./routes/admin/reports'));
 
 // Reviews Management
