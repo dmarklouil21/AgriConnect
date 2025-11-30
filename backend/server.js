@@ -10,7 +10,12 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "https://agri-connect-coral.vercel.app"], // Add your Vercel URL here
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"] // Explicitly allow Authorization
+}));
 app.use(express.json());
 
 // Routes
