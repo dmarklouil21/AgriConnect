@@ -6,9 +6,9 @@ const API_BASE_URL = 'https://agriconnect-api.up.railway.app/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // headers: {
+  //   'Content-Type': 'application/json',
+  // },
 });
 
 // Request interceptor to add auth token
@@ -18,6 +18,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Don't set Content-Type for multipart/form-data - let browser set it automatically
+    if (!config.headers['Content-Type'] && !(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+
     return config;
   },
   (error) => {
@@ -90,24 +96,28 @@ class ApiService {
   }
 
   async createProduct(productData) {
-    const token = localStorage.getItem('token');
-    const response = await api.post('/farmer/products', productData, {
-      headers: { 
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    // const token = localStorage.getItem('token');
+    // const response = await api.post('/farmer/products', productData, {
+    //   headers: { 
+    //     'Content-Type': 'multipart/form-data',
+    //     'Authorization': `Bearer ${token}`
+    //   }
+    // });
+    // return response.data;
+    const response = await api.post('/farmer/products', productData);
     return response.data;
   }
 
   async updateProduct(productId, productData) {
-    const token = localStorage.getItem('token');
-    const response = await api.put(`/farmer/products/${productId}`, productData, {
-      headers: { 
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${token}`
-       }
-    });
+    // const token = localStorage.getItem('token');
+    // const response = await api.put(`/farmer/products/${productId}`, productData, {
+    //   headers: { 
+    //     'Content-Type': 'multipart/form-data',
+    //     'Authorization': `Bearer ${token}`
+    //    }
+    // });
+    // return response.data;
+    const response = await api.put(`/farmer/products/${productId}`, productData);
     return response.data;
   }
 
