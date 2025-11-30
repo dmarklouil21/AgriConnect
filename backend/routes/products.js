@@ -25,20 +25,31 @@ router.get('/farmer/products', auth, async (req, res) => {
 
     const filter = { farmer: farmer._id };
     
-    if (req.query.category) filter.category = req.query.category;
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
     if (req.query.search) {
       filter.$or = [
         { name: { $regex: req.query.search, $options: 'i' } },
         { description: { $regex: req.query.search, $options: 'i' } }
       ];
     }
+
     if (req.query.stockStatus) {
       switch (req.query.stockStatus) {
-        case 'in-stock': filter.stock = { $gt: 0 }; break;
-        case 'low-stock': filter.stock = { $gt: 0, $lte: 10 }; break;
-        case 'out-of-stock': filter.stock = 0; break;
+        case 'in-stock':
+          filter.stock = { $gt: 0 };
+          break;
+        case 'low-stock':
+          filter.stock = { $gt: 0, $lte: 10 };
+          break;
+        case 'out-of-stock':
+          filter.stock = 0;
+          break;
       }
     }
+
     if (req.query.isActive !== undefined) {
       filter.isActive = req.query.isActive === 'true';
     }
@@ -73,7 +84,7 @@ router.get('/farmer/products', auth, async (req, res) => {
 });
 
 // --- NEW ROUTE: Get Top Selling Products ---
-// This must come BEFORE /farmer/products/:id
+// IMPORTANT: This must be placed BEFORE /farmer/products/:id
 router.get('/farmer/products/top', auth, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
@@ -88,7 +99,7 @@ router.get('/farmer/products/top', auth, async (req, res) => {
 
     // Find products sorted by salesCount descending
     const topProducts = await Product.find({ farmer: farmer._id })
-      .sort({ salesCount: -1 }) // High to low
+      .sort({ salesCount: -1 }) // Sort High to Low
       .limit(limit)
       .lean();
 
@@ -99,7 +110,7 @@ router.get('/farmer/products/top', auth, async (req, res) => {
       category: p.category,
       sales: p.salesCount || 0,
       unit: p.unit,
-      // Calculate approx revenue based on current price
+      // Calculate estimated revenue based on current price * total sales
       revenue: `$${((p.salesCount || 0) * p.price).toFixed(2)}`,
       averagePrice: p.price,
       productImage: p.productImage
@@ -117,7 +128,7 @@ router.get('/farmer/products/top', auth, async (req, res) => {
 router.get('/farmer/products/stats', auth, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return res.status(403).json({ message: 'Access denied. Farmer account required.' });
     }
 
     const farmer = await Farmer.findOne({ user: req.user._id });
@@ -134,10 +145,14 @@ router.get('/farmer/products/stats', auth, async (req, res) => {
           totalStock: { $sum: '$stock' },
           totalValue: { $sum: { $multiply: ['$price', '$stock'] } },
           lowStockCount: {
-            $sum: { $cond: [{ $and: [{ $gt: ['$stock', 0] }, { $lte: ['$stock', 10] }] }, 1, 0] }
+            $sum: {
+              $cond: [{ $and: [{ $gt: ['$stock', 0] }, { $lte: ['$stock', 10] }] }, 1, 0]
+            }
           },
           outOfStockCount: {
-            $sum: { $cond: [{ $eq: ['$stock', 0] }, 1, 0] }
+            $sum: {
+              $cond: [{ $eq: ['$stock', 0] }, 1, 0]
+            }
           }
         }
       }
@@ -172,11 +187,11 @@ router.get('/farmer/products/stats', auth, async (req, res) => {
   }
 });
 
-// Get single product (Must stay AFTER specific paths like /top or /stats)
+// Get single product
 router.get('/farmer/products/:id', auth, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return res.status(403).json({ message: 'Access denied. Farmer account required.' });
     }
 
     const farmer = await Farmer.findOne({ user: req.user._id });
@@ -208,7 +223,7 @@ router.get('/farmer/products/:id', auth, async (req, res) => {
 router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return res.status(403).json({ message: 'Access denied. Farmer account required.' });
     }
 
     const farmer = await Farmer.findOne({ user: req.user._id });
@@ -231,9 +246,13 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
       return res.status(400).json({ message: 'A product with this name already exists' });
     }
 
+    // Handle images (Support both Local and Cloudinary)
     let productImage = '';
     if (req.file) {
-      productImage = `/uploads/productImage/${req.file.filename}`;
+        // If using Cloudinary, req.file.path is the URL. 
+        // If using local, it might need construction or req.file.path depending on config.
+        // Assuming the updated upload.js is used, req.file.path IS the Cloudinary URL.
+        productImage = req.file.path ? req.file.path : `/uploads/productImage/${req.file.filename}`;
     }
 
     const product = new Product({
@@ -245,10 +264,9 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
       stock: parseInt(stock),
       unit: unit || 'kg',
       productImage: productImage,
-      // Initialize analytics
-      salesCount: 0,
-      reviewsCount: 0,
-      rating: 0
+      salesCount: 0, // Initialize sales
+      rating: 0,
+      reviewsCount: 0
     });
 
     await product.save();
@@ -263,6 +281,9 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
     });
   } catch (error) {
     console.error('Create product error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation error', error: error.message });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -271,34 +292,55 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
 router.put('/farmer/products/:id', auth, uploadProductImage, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return res.status(403).json({ message: 'Access denied. Farmer account required.' });
     }
 
     const farmer = await Farmer.findOne({ user: req.user._id });
-    if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
+    if (!farmer) {
+      return res.status(404).json({ message: 'Farmer profile not found' });
+    }
 
-    const product = await Product.findOne({ _id: req.params.id, farmer: farmer._id });
-    if (!product) return res.status(404).json({ message: 'Product not found' });
+    const product = await Product.findOne({ 
+      _id: req.params.id, 
+      farmer: farmer._id 
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
 
     const { name, category, description, price, stock, unit, isActive } = req.body;
 
+    // Check name conflict
     if (name && name !== product.name) {
       const existingProduct = await Product.findOne({ 
         name: { $regex: new RegExp(`^${name}$`, 'i') }, 
         farmer: farmer._id,
         _id: { $ne: product._id }
       });
-      if (existingProduct) return res.status(400).json({ message: 'Name already taken' });
+
+      if (existingProduct) {
+        return res.status(400).json({ message: 'A product with this name already exists' });
+      }
     }
 
+    // Handle image update
     if (req.file) {
-      if (product.productImage) {
-        const oldPath = path.join(__dirname, '..', product.productImage);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      // Delete old image ONLY if it's a local file (starts with /uploads)
+      // If it's a Cloudinary URL (http...), we generally leave it or use Cloudinary API to delete (advanced)
+      if (product.productImage && !product.productImage.startsWith('http')) {
+        const oldPathRelative = product.productImage;
+        const oldPathAbsolute = path.join(__dirname, '..', oldPathRelative);
+        if (fs.existsSync(oldPathAbsolute)) {
+           fs.unlinkSync(oldPathAbsolute);
+        }
       }
-      product.productImage = `/uploads/productImage/${req.file.filename}`;
+
+      // Save new path/URL
+      product.productImage = req.file.path ? req.file.path : `/uploads/productImage/${req.file.filename}`;
     } 
 
+    // Update fields
     if (name !== undefined) product.name = name;
     if (category !== undefined) product.category = category;
     if (description !== undefined) product.description = description;
@@ -309,55 +351,81 @@ router.put('/farmer/products/:id', auth, uploadProductImage, async (req, res) =>
 
     await product.save();
 
-    res.json({ message: 'Product updated successfully', product });
+    const productObj = product.toObject();
+    productObj.isLowStock = product.stock <= 10;
+    productObj.isOutOfStock = product.stock === 0;
+
+    res.json({
+      message: 'Product updated successfully',
+      product: productObj
+    });
   } catch (error) {
-    console.error('Update error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Update product error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Update product stock
 router.patch('/farmer/products/:id/stock', auth, async (req, res) => {
   try {
-    if (req.user.userType !== 'farmer') return res.status(403).json({ message: 'Access denied' });
-    
+    if (req.user.userType !== 'farmer') {
+      return res.status(403).json({ message: 'Access denied. Farmer account required.' });
+    }
+
     const farmer = await Farmer.findOne({ user: req.user._id });
+    if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
+
     const product = await Product.findOne({ _id: req.params.id, farmer: farmer._id });
-    
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     const { stock } = req.body;
-    if (stock === undefined || stock < 0) return res.status(400).json({ message: 'Invalid stock' });
+
+    if (stock === undefined || stock < 0) {
+      return res.status(400).json({ message: 'Valid stock quantity is required' });
+    }
 
     product.stock = parseInt(stock);
     await product.save();
 
-    res.json({ message: 'Stock updated', product });
+    const productObj = product.toObject();
+    productObj.isLowStock = product.stock <= 10;
+    productObj.isOutOfStock = product.stock === 0;
+
+    res.json({
+      message: 'Stock updated successfully',
+      product: productObj
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Update stock error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Delete product
 router.delete('/farmer/products/:id', auth, async (req, res) => {
   try {
-    if (req.user.userType !== 'farmer') return res.status(403).json({ message: 'Access denied' });
+    if (req.user.userType !== 'farmer') {
+      return res.status(403).json({ message: 'Access denied. Farmer account required.' });
+    }
 
     const farmer = await Farmer.findOne({ user: req.user._id });
-    const product = await Product.findOne({ _id: req.params.id, farmer: farmer._id });
+    if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
 
+    const product = await Product.findOne({ _id: req.params.id, farmer: farmer._id });
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    // Optional: Delete image file
-    if (product.productImage) {
+    // Clean up image if it's local
+    if (product.productImage && !product.productImage.startsWith('http')) {
        const imgPath = path.join(__dirname, '..', product.productImage);
        if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
     }
 
     await Product.findByIdAndDelete(req.params.id);
+
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Delete product error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
