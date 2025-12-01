@@ -9,6 +9,7 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import { ScissorsSquare } from 'lucide-react';
 
+// Backup Purpose
 // Main App Component with Router
 function App() {
   return (
