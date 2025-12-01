@@ -603,7 +603,7 @@ const ProductModal = ({ title, product, onChange, onSubmit, onClose, actionText,
                         required
                     >
                         <option value="">Select...</option>
-                        {['Vegetables', 'Fruits', 'Dairy', 'Grains', 'Herbs', 'Meat', 'Eggs', 'Honey', 'Other'].map(c => <option key={c} value={c}>{c}</option>)}
+                        {['Vegetables', 'Fruits', 'Dairy', 'Grains', 'Herbs', 'Meat', 'Eggs', 'Honey'].map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
                 <div>
