@@ -44,13 +44,35 @@ const Register = () => {
     setErrors({});
     setSubmitError('');
 
-    // Validation
+    // --- Validation Logic ---
     const newErrors = {};
-    if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    if (formData.password.length < 6) newErrors.password = 'Min 6 characters';
-    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-    if (!formData.agreeToTerms) newErrors.agreeToTerms = 'Required';
+    
+    // Email Validation
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = 'Email is invalid';
+    }
 
+    // Phone Validation (Matches Mongoose Schema)
+    // Regex: Optional +, then at least 10 characters of digits, spaces, dashes, or parens
+    const phoneRegex = /^\+?[\d\s\-()]{10,}$/;
+    if (!phoneRegex.test(formData.phoneNumber)) {
+        newErrors.phoneNumber = 'Invalid phone number (min 10 digits)';
+    }
+
+    // Password Validation
+    if (formData.password.length < 6) {
+        newErrors.password = 'Min 6 characters';
+    }
+    if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    // Terms Validation
+    if (!formData.agreeToTerms) {
+        newErrors.agreeToTerms = 'Required';
+    }
+
+    // If errors exist, stop submission
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -95,6 +117,7 @@ const Register = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    // Clear errors as user types
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     if (submitError) setSubmitError('');
   };
@@ -175,6 +198,7 @@ const Register = () => {
               placeholder="(555) 123-4567"
               value={formData.phoneNumber}
               onChange={handleChange}
+              error={errors.phoneNumber} // Pass error here
             />
             <InputField
               label="Address"

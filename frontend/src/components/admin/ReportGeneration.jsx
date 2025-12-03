@@ -5,18 +5,20 @@ import {
   BarChart3, Users, ShoppingBag, Calendar, CheckCircle, AlertCircle, Clock, Check
 } from 'lucide-react';
 
+// --- PDF IMPORTS FIXED ---
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable'; 
+
 const ReportGeneration = () => {
   const [reports, setReports] = useState([]);
   const [stats, setStats] = useState({ totalUsers: 0, totalSales: 0, totalOrders: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshLoading, setRefreshLoading] = useState(false);
   
-  // Modal State
+  // ... (State variables remain the same)
   const [showModal, setShowModal] = useState(false);
   const [newReport, setNewReport] = useState({ type: 'Sales', name: '' });
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Notification State
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -24,7 +26,7 @@ const ReportGeneration = () => {
     loadData();
   }, []);
 
-  // Auto-hide notifications
+  // ... (useEffect for auto-hide notifications remains the same)
   useEffect(() => {
     if (successMsg || errorMsg) {
       const timer = setTimeout(() => {
@@ -35,6 +37,7 @@ const ReportGeneration = () => {
     }
   }, [successMsg, errorMsg]);
 
+  // ... (loadData, handleRefresh, handleGenerate remain the same)
   const loadData = async () => {
     if (!refreshLoading) setLoading(true);
     try {
@@ -63,12 +66,8 @@ const ReportGeneration = () => {
     setIsGenerating(true);
     setErrorMsg('');
     try {
-      // Auto-generate name if empty
       const reportName = newReport.name || `${newReport.type} Report - ${new Date().toLocaleDateString()}`;
-      
       const response = await apiService.generateReport(newReport.type, reportName);
-      
-      // Add new report to list (backend returns the created object)
       setReports([response.report, ...reports]);
       setShowModal(false);
       setNewReport({ type: 'Sales', name: '' });
@@ -80,15 +79,51 @@ const ReportGeneration = () => {
     }
   };
 
+  // --- FIXED PDF GENERATION LOGIC ---
   const downloadReport = (report) => {
-    // Simulate download
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(report.data, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `${report.name}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const doc = new jsPDF();
+
+    // 1. Header
+    doc.setFontSize(20);
+    doc.setTextColor(88, 28, 135); // Purple-900
+    doc.text("AgriConnect Report", 14, 22);
+
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Report Name: ${report.name}`, 14, 32);
+    doc.text(`Type: ${report.type} Analysis`, 14, 38);
+    doc.text(`Generated: ${new Date(report.createdAt).toLocaleDateString()}`, 14, 44);
+
+    // 2. Prepare Table Data
+    let tableColumn = [];
+    let tableRows = [];
+
+    if (report.data && Array.isArray(report.data) && report.data.length > 0) {
+      // Extract headers dynamically
+      tableColumn = Object.keys(report.data[0]).map(key => key.toUpperCase());
+      
+      // Extract rows
+      tableRows = report.data.map(item => {
+        return Object.values(item).map(val => {
+            if (typeof val === 'object' && val !== null) return JSON.stringify(val);
+            return val;
+        });
+      });
+    }
+
+    // 3. Use 'autoTable' directly (this is the fix)
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 50,
+      theme: 'grid',
+      headStyles: { fillColor: [147, 51, 234] }, // Purple-600
+      styles: { fontSize: 10, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [250, 245, 255] } // Purple-50
+    });
+
+    // 4. Save PDF
+    doc.save(`${report.name.replace(/\s+/g, '_')}.pdf`);
   };
 
   const getStatusConfig = (status) => {

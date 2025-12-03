@@ -37,8 +37,8 @@ router.get('/farmer/orders', auth, async (req, res) => {
         status: order.status,
         totalAmount: order.totalAmount,
         consumer: {
-            firstName: order.user?.firstName || order.shippingAddress.fullName.split(' ')[0],
-            lastName: order.user?.lastName || '',
+            fullName: order.shippingAddress.fullName,
+            // lastName: order.user?.lastName || '',
             email: order.user?.email || 'N/A',
             phone: order.shippingAddress.phone
         },

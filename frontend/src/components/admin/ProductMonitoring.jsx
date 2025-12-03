@@ -192,7 +192,7 @@ const ProductMonitoring = () => {
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
                                         <img 
-                                            src={product.images?.[0] ? `http://localhost:5000${product.images[0]}` : PLACEHOLDER_IMAGE}
+                                            src={product.images?.[0] || PLACEHOLDER_IMAGE}
                                             alt={product.name}
                                             className="w-full h-full object-cover"
                                             onError={(e) => e.target.src = PLACEHOLDER_IMAGE}
@@ -286,7 +286,7 @@ const ProductMonitoring = () => {
             {/* Modal Header/Image */}
             <div className="relative h-56 bg-slate-100">
                 <img 
-                    src={selectedProduct.images?.[0] ? `http://localhost:5000${selectedProduct.images[0]}` : PLACEHOLDER_IMAGE} 
+                    src={selectedProduct.images?.[0] || PLACEHOLDER_IMAGE} 
                     className="w-full h-full object-cover"
                     onError={(e) => e.target.src = PLACEHOLDER_IMAGE}
                 />

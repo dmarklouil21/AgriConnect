@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Package, Truck, CheckCircle, Clock, X, MapPin, Phone, User, 
   Loader2, Eye, Ban, AlertTriangle, Star, Calendar, ChevronRight,
-  ShoppingBag
+  ShoppingBag, Check, AlertCircle
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 
@@ -21,11 +21,26 @@ const OrderTracking = () => {
 
   // Cancellation State
   const [orderToCancel, setOrderToCancel] = useState(null); // Stores ID for modal
-  const [isCancelling, setIsCancelling] = useState(false);  // Loading state for API call
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  // Notification State (Toast)
+  const [toast, setToast] = useState({ type: '', message: '' });
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (toast.message) {
+      const timer = setTimeout(() => setToast({ type: '', message: '' }), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
 
   const fetchOrders = async () => {
     try {
@@ -33,6 +48,7 @@ const OrderTracking = () => {
       setOrders(data);
     } catch (err) {
       console.error("Failed to fetch orders", err);
+      showToast('error', 'Failed to load orders');
     } finally {
       setLoading(false);
     }
@@ -62,10 +78,10 @@ const OrderTracking = () => {
           setSelectedOrder({ ...selectedOrder, status: 'Cancelled' });
       }
       
-      // Close modal
-      setOrderToCancel(null);
+      showToast('success', 'Order cancelled successfully');
+      setOrderToCancel(null); // Close modal
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to cancel order");
+      showToast('error', err.response?.data?.message || "Failed to cancel order");
     } finally {
       setIsCancelling(false);
     }
@@ -74,6 +90,14 @@ const OrderTracking = () => {
   const openReviewModal = (product, orderId) => {
     setReviewProduct(product);
     setReviewOrderId(orderId);
+  };
+
+  const handleReviewSuccess = () => {
+    showToast('success', 'Review submitted successfully!');
+  };
+
+  const handleReviewError = (msg) => {
+    showToast('error', msg);
   };
 
   if (loading) return (
@@ -86,6 +110,18 @@ const OrderTracking = () => {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       
+      {/* Toast Notification */}
+      {toast.message && (
+        <div className={`fixed top-24 right-4 px-6 py-3 rounded-xl shadow-xl z-[70] flex items-center gap-3 animate-in slide-in-from-top-2 ${
+            toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          <div className="bg-white/20 p-1 rounded-full">
+            {toast.type === 'success' ? <Check className="w-4 h-4"/> : <AlertTriangle className="w-4 h-4"/>}
+          </div>
+          <span className="font-medium">{toast.message}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -165,6 +201,8 @@ const OrderTracking = () => {
             product={reviewProduct} 
             orderId={reviewOrderId} 
             onClose={() => setReviewProduct(null)} 
+            onSuccess={handleReviewSuccess}
+            onError={handleReviewError}
         />
       )}
     </div>
@@ -423,7 +461,7 @@ const CancelOrderModal = ({ onConfirm, onCancel, loading }) => (
 );
 
 // --- Leave Review Modal ---
-const LeaveReviewModal = ({ product, orderId, onClose }) => {
+const LeaveReviewModal = ({ product, orderId, onClose, onSuccess, onError }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -439,11 +477,10 @@ const LeaveReviewModal = ({ product, orderId, onClose }) => {
         rating,
         comment
       });
-      // In a real app, you might want to show a toast here instead of alert
-      alert('Review submitted successfully!');
+      if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to submit review');
+      if (onError) onError(error.response?.data?.message || 'Failed to submit review');
     } finally {
       setIsSubmitting(false);
     }
