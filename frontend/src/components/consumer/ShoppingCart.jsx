@@ -9,6 +9,7 @@ import { apiService } from '../../services/api';
 // Safe fallback for images
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100' fill='%23f1f5f9'%3E%3Crect width='100' height='100' /%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3ENo Image%3C/text%3E%3C/svg%3E";
 
+
 const ShoppingCart = ({ onCartUpdate }) => {
   const [carts, setCarts] = useState([]); 
   const [loading, setLoading] = useState(true);
@@ -124,8 +125,8 @@ const ShoppingCart = ({ onCartUpdate }) => {
         {carts.map(cart => {
             const subtotal = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
             const shipping = subtotal > 50 ? 0 : 5.99;
-            const tax = subtotal * 0.08; 
-            const total = subtotal + shipping + tax;
+            // const tax = subtotal * 0.08; 
+            const total = subtotal + shipping;
 
             return (
             <div key={cart._id} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -151,7 +152,7 @@ const ShoppingCart = ({ onCartUpdate }) => {
                     {/* Items List */}
                     <div className="space-y-6 mb-8">
                         {cart.items.map(item => {
-                            const imageUrl = item.product?.productImage || PLACEHOLDER_IMAGE;
+                            const imageUrl = item.product.productImage || PLACEHOLDER_IMAGE;
 
                             return (
                                 <div key={item.product._id} className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-50 last:border-0 last:pb-0">
@@ -220,10 +221,10 @@ const ShoppingCart = ({ onCartUpdate }) => {
                                         {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
                                     </span>
                                 </div>
-                                <div className="flex justify-between text-slate-500">
+                                {/* <div className="flex justify-between text-slate-500">
                                     <span>Tax (Est.)</span>
                                     <span>${tax.toFixed(2)}</span>
-                                </div>
+                                </div> */}
                                 <div className="border-t border-slate-200 pt-2 flex justify-between items-center mt-2">
                                     <span className="font-bold text-slate-800 text-lg">Total</span>
                                     <span className="font-extrabold text-slate-900 text-2xl">${total.toFixed(2)}</span>

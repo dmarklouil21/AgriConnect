@@ -36,7 +36,7 @@ const OrderManagement = () => {
       setLoading(false);
     }
   };
-
+  console.log(orders);
   const handleRefresh = async () => {
     setRefreshLoading(true);
     await loadOrders();
@@ -388,7 +388,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusChange, loading }) => {
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
                 <div className="flex justify-between border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-sm">Name</span>
-                  <span className="font-medium text-slate-800">{order.consumer?.firstName || order.user?.firstName} {order.consumer?.lastName || order.user?.lastName}</span>
+                  <span className="font-medium text-slate-800">{order.consumer?.fullName}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-100 pb-2">
                   <span className="text-slate-500 text-sm">Email</span>

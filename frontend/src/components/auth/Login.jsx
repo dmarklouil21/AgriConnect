@@ -154,12 +154,16 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-slate-500">
-          Don't have an account?{' '}
-          <Link to={`/register/${actualUserType}`} className={`font-bold ${theme.text} hover:underline`}>
-            Create Account
-          </Link>
-        </div>
+        {actualUserType !== 'admin' ? (
+          <div className="mt-8 text-center text-sm text-slate-500">
+            Don't have an account?{' '}
+            {/* {actualUserType !== 'admin' ? ( */}
+            <Link to={`/register/${actualUserType}`} className={`font-bold ${theme.text} hover:underline`}>
+              Create Account
+            </Link>
+            {/* ) : null} */}
+          </div>
+        ) : null}
       </div>
     </AuthLayout>
   );

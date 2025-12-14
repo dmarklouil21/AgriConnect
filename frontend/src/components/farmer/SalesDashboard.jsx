@@ -7,7 +7,11 @@ import {
   RefreshCw, 
   Loader2,
   ArrowRight,
-  MoreHorizontal
+  MoreHorizontal,
+  X,
+  Calendar,
+  Clock,
+  CheckCircle
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 
@@ -27,6 +31,10 @@ const SalesDashboard = () => {
   const [refreshLoading, setRefreshLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Modal States
+  const [showTopProduceModal, setShowTopProduceModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -36,11 +44,10 @@ const SalesDashboard = () => {
       if (!refreshLoading) setLoading(true);
       setError('');
       
-      // Fetch Order Stats (Real Revenue) AND Top Products
       const [orderStats, topProductsData, activityData] = await Promise.all([
-        apiService.getOrderStats(), // Returns { totalRevenue, totalOrders, ... }
+        apiService.getOrderStats(),
         apiService.getTopProducts(5),
-        apiService.getRecentActivity(3)
+        apiService.getRecentActivity(5) 
       ]);
 
       setStats(orderStats);
@@ -127,24 +134,27 @@ const SalesDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Top Products Table */}
-        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
             <div>
               <h3 className="text-lg font-bold text-slate-800">Top Produce</h3>
               <p className="text-sm text-slate-400">Highest earning items</p>
             </div>
-            <button className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+            <button 
+                onClick={() => setShowTopProduceModal(true)}
+                className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition-colors"
+            >
               View All <ArrowRight size={16} />
             </button>
           </div>
           
-          <div className="p-2 overflow-x-auto">
+          <div className="p-2 overflow-x-auto flex-1">
             <table className="w-full">
               <thead className="bg-slate-50 text-xs uppercase text-slate-400 font-semibold text-left">
                 <tr>
                   <th className="px-6 py-3 rounded-l-xl">Product</th>
                   <th className="px-6 py-3">Category</th>
-                  <th className="px-6 py-3">Sales Count</th> {/* Renamed for clarity */}
+                  <th className="px-6 py-3">Sales Count</th>
                   <th className="px-6 py-3 rounded-r-xl text-right">Revenue</th>
                 </tr>
               </thead>
@@ -155,7 +165,7 @@ const SalesDashboard = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
                             <img 
-                                src={product?.productImage || PLACEHOLDER_IMAGE}
+                                src={product.productImage || PLACEHOLDER_IMAGE}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }}
@@ -171,7 +181,6 @@ const SalesDashboard = () => {
                         {product.category || 'General'}
                       </span>
                     </td>
-                    {/* UPDATED: Showing pure sales count number */}
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center justify-center bg-blue-50 text-blue-700 font-bold px-3 py-1 rounded-full text-sm">
                         {product.sales}
@@ -186,7 +195,7 @@ const SalesDashboard = () => {
               </tbody>
             </table>
             {topProducts.length === 0 && (
-              <div className="p-12 text-center flex flex-col items-center">
+              <div className="p-12 text-center flex flex-col items-center justify-center h-full">
                  <Package className="w-12 h-12 text-slate-200 mb-3" />
                  <p className="text-slate-500 font-medium">No sales data available yet.</p>
                  <p className="text-slate-400 text-sm">Once you start selling, your top products will appear here.</p>
@@ -199,9 +208,6 @@ const SalesDashboard = () => {
         <div className="bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col h-full">
           <div className="p-6 border-b border-slate-50 flex justify-between items-center">
             <h3 className="text-lg font-bold text-slate-800">Activity</h3>
-            <button className="text-slate-400 hover:text-slate-600">
-              <MoreHorizontal size={20} />
-            </button>
           </div>
           
           <div className="p-6 flex-1">
@@ -252,17 +258,31 @@ const SalesDashboard = () => {
           </div>
           
           <div className="p-4 bg-slate-50 rounded-b-3xl border-t border-slate-100">
-             <button className="w-full py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">
+             <button 
+                onClick={() => setShowHistoryModal(true)}
+                className="w-full py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+            >
                View Full History
              </button>
           </div>
         </div>
       </div>
+
+      {/* --- MODALS --- */}
+      
+      {showTopProduceModal && (
+        <TopProduceModal onClose={() => setShowTopProduceModal(false)} />
+      )}
+
+      {showHistoryModal && (
+        <HistoryModal onClose={() => setShowHistoryModal(false)} />
+      )}
+
     </div>
   );
 };
 
-// --- Sub-component: Stat Card ---
+// --- Sub-Component: Stat Card ---
 const StatCard = ({ title, value, icon: Icon, color }) => {
   const colorStyles = {
     emerald: "bg-emerald-50 text-emerald-600",
@@ -281,6 +301,136 @@ const StatCard = ({ title, value, icon: Icon, color }) => {
       <div>
         <h4 className="text-slate-500 text-sm font-bold tracking-wide uppercase mb-1">{title}</h4>
         <p className="text-3xl font-extrabold text-slate-800 tracking-tight">{value}</p>
+      </div>
+    </div>
+  );
+};
+
+// --- Sub-Component: Top Produce Modal ---
+const TopProduceModal = ({ onClose }) => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await apiService.getTopProducts(50); // Fetch up to 50 top products
+        setProducts(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95">
+        <div className="flex justify-between items-center p-6 border-b border-slate-100">
+          <h3 className="text-xl font-bold text-slate-800">Top Performing Products</h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6 text-slate-500"/></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-500"/></div>
+          ) : (
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-400 font-bold sticky top-0">
+                <tr>
+                   <th className="px-4 py-3 rounded-l-lg">Rank</th>
+                   <th className="px-4 py-3">Product</th>
+                   <th className="px-4 py-3">Category</th>
+                   <th className="px-4 py-3">Sales</th>
+                   <th className="px-4 py-3 rounded-r-lg text-right">Revenue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                 {products.map((p, i) => (
+                    <tr key={i} className="hover:bg-slate-50/50">
+                       <td className="px-4 py-4 font-bold text-slate-400">#{i+1}</td>
+                       <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden">
+                                <img src={p.productImage || PLACEHOLDER_IMAGE} className="w-full h-full object-cover" onError={(e)=>e.target.src=PLACEHOLDER_IMAGE}/>
+                             </div>
+                             <span className="font-bold text-slate-700">{p.name}</span>
+                          </div>
+                       </td>
+                       <td className="px-4 py-4 text-sm text-slate-500">{p.category}</td>
+                       <td className="px-4 py-4 font-medium text-blue-600">{p.sales} {p.unit}</td>
+                       <td className="px-4 py-4 text-right font-bold text-emerald-600">{p.revenue}</td>
+                    </tr>
+                 ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Sub-Component: History Modal ---
+const HistoryModal = ({ onClose }) => {
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch more history (e.g., 50 items)
+        const data = await apiService.getRecentActivity(50); 
+        setActivities(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95">
+        <div className="flex justify-between items-center p-6 border-b border-slate-100">
+          <h3 className="text-xl font-bold text-slate-800">Activity History</h3>
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full"><X className="w-6 h-6 text-slate-500"/></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+           {loading ? (
+             <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-emerald-500"/></div>
+           ) : (
+             <div className="space-y-0 relative">
+                 {/* Timeline Line */}
+                 <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-100"></div>
+                 
+                 {activities.map((act, i) => {
+                    const isMoney = act.type === 'complete' || act.icon === 'DollarSign';
+                    return (
+                       <div key={i} className="relative pl-14 py-4 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors rounded-lg pr-4">
+                          <div className={`absolute left-4 top-5 w-5 h-5 rounded-full border-4 border-white shadow-sm z-10 ${isMoney ? 'bg-emerald-500' : 'bg-blue-500'}`}></div>
+                          <div className="flex justify-between items-start">
+                             <div>
+                                <p className="font-bold text-slate-800 text-sm">{act.action}</p>
+                                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                   <Clock size={12}/> {act.time}
+                                </div>
+                             </div>
+                             {act.amount && (
+                                <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-bold">
+                                   +${typeof act.amount === 'number' ? act.amount.toFixed(2) : act.amount}
+                                </span>
+                             )}
+                          </div>
+                       </div>
+                    );
+                 })}
+             </div>
+           )}
+        </div>
       </div>
     </div>
   );

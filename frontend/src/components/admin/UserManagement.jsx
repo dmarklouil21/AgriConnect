@@ -26,11 +26,6 @@ const UserManagement = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
 
-  // New user form state
-  const [newUser, setNewUser] = useState({
-    name: '', email: '', type: 'Consumer', phone: '', address: '', farmName: '', password: '', confirmPassword: ''
-  });
-
   useEffect(() => {
     loadData();
   }, [filterType]);
@@ -84,7 +79,7 @@ const UserManagement = () => {
     setActionLoading(true);
     try {
       const { confirmPassword, ...dataToSend } = formData;
-      await apiService.createAdminUser(dataToSend);
+      await apiService.createUser(dataToSend);
       setShowAddModal(false);
       loadData();
     } catch (error) {
@@ -373,14 +368,41 @@ const AddUserModal = ({ onClose, onSubmit, loading }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (formData.password.length < 6) return setError('Password must be at least 6 characters');
-        if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+        setError('');
+        
+        // --- VALIDATION START ---
+        
+        // Phone Number Validation (Same Regex as Register.jsx)
+        const phoneRegex = /^\+?[\d\s\-()]{10,}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            return setError('Invalid phone number (min 10 digits)');
+        }
+
+        // Password Validation
+        if (formData.password.length < 6) {
+            return setError('Password must be at least 6 characters');
+        }
+        if (formData.password !== formData.confirmPassword) {
+            return setError('Passwords do not match');
+        }
+        
+        // --- VALIDATION END ---
+
         onSubmit(formData);
     };
 
     return (
         <ModalLayout title="Add New User" onClose={onClose}>
             <form onSubmit={handleSubmit} className="space-y-4">
+                
+                {/* General Error Message Display */}
+                {error && (
+                  <div className="mb-4 bg-red-50 border border-red-100 rounded-xl p-3 flex items-start gap-2 text-red-700 animate-in slide-in-from-top-2">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm font-medium">{error}</p>
+                  </div>
+                )}
+
                 <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Account Type</label>
                     <div className="grid grid-cols-3 gap-2">
@@ -399,7 +421,18 @@ const AddUserModal = ({ onClose, onSubmit, loading }) => {
                 <div className="space-y-3">
                     <input required placeholder="Full Name" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     <input required type="email" placeholder="Email Address" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                    <input required type="tel" placeholder="Phone Number" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                    
+                    <input 
+                        required 
+                        type="tel" 
+                        placeholder="Phone Number" 
+                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:border-purple-500 ${error.includes('phone') ? 'border-red-300 bg-red-50' : 'border-slate-200'}`} 
+                        value={formData.phone} 
+                        onChange={e => {
+                            setFormData({...formData, phone: e.target.value});
+                            if (error.includes('phone')) setError(''); // Clear error on type
+                        }} 
+                    />
                     
                     {formData.type === 'Farmer' && (
                         <input required placeholder="Farm Business Name" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500" value={formData.farmName} onChange={e => setFormData({...formData, farmName: e.target.value})} />
@@ -413,8 +446,7 @@ const AddUserModal = ({ onClose, onSubmit, loading }) => {
                         <input required type={showPass ? "text" : "password"} placeholder="Password" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
                         <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"><Eye size={18}/></button>
                     </div>
-                    <input required type="password" placeholder="Confirm Password" className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus:outline-none focus:border-purple-500 ${error ? 'border-red-300' : 'border-slate-200'}`} value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} />
-                    {error && <p className="text-xs text-red-500 font-medium flex items-center gap-1"><AlertCircle size={12}/> {error}</p>}
+                    <input required type="password" placeholder="Confirm Password" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} />
                 </div>
 
                 <button type="submit" disabled={loading} className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all flex justify-center">
