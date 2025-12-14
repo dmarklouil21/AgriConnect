@@ -2,7 +2,7 @@ const express = require('express');
 const Product = require('../models/farmer/Product');
 const Farmer = require('../models/user/Farmer');
 const auth = require('../middleware/auth');
-const { uploadProductImage } = require('../utils/upload'); 
+const { uploadProductImage, uploadToCloudinary } = require('../utils/upload'); 
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
@@ -205,6 +205,7 @@ router.get('/farmer/products/:id', auth, async (req, res) => {
 });
 
 // Create new product
+// New for Cloudinary upload
 router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
   try {
     if (req.user.userType !== 'farmer') {
@@ -232,8 +233,15 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
     }
 
     let productImage = '';
+    // If image was uploaded, process with Cloudinary
     if (req.file) {
-      productImage = `/uploads/productImage/${req.file.filename}`;
+      try {
+        const result = await uploadToCloudinary(req.file);
+        productImage = result.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
+      }
     }
 
     const product = new Product({
@@ -245,7 +253,6 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
       stock: parseInt(stock),
       unit: unit || 'kg',
       productImage: productImage,
-      // Initialize analytics
       salesCount: 0,
       reviewsCount: 0,
       rating: 0
@@ -266,7 +273,70 @@ router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+// router.post('/farmer/products', auth, uploadProductImage, async (req, res) => {
+//   try {
+//     if (req.user.userType !== 'farmer') {
+//       return res.status(403).json({ message: 'Access denied.' });
+//     }
 
+//     const farmer = await Farmer.findOne({ user: req.user._id });
+//     if (!farmer) {
+//       return res.status(404).json({ message: 'Farmer profile not found' });
+//     }
+
+//     const { name, category, description, price, stock, unit } = req.body;
+
+//     if (!name || !category || !price || stock === undefined) {
+//       return res.status(400).json({ message: 'Name, category, price, and stock are required' });
+//     }
+
+//     const existingProduct = await Product.findOne({ 
+//       name: { $regex: new RegExp(`^${name}$`, 'i') }, 
+//       farmer: farmer._id 
+//     });
+
+//     if (existingProduct) {
+//       return res.status(400).json({ message: 'A product with this name already exists' });
+//     }
+
+//     let productImage = '';
+//     if (req.file) {
+//       productImage = `/uploads/productImage/${req.file.filename}`;
+//     }
+
+//     const product = new Product({
+//       farmer: farmer._id,
+//       name,
+//       category,
+//       description: description || '',
+//       price: parseFloat(price),
+//       stock: parseInt(stock),
+//       unit: unit || 'kg',
+//       productImage: productImage,
+//       // Initialize analytics
+//       salesCount: 0,
+//       reviewsCount: 0,
+//       rating: 0
+//     });
+
+//     await product.save();
+
+//     const productObj = product.toObject();
+//     productObj.isLowStock = product.stock <= 10;
+//     productObj.isOutOfStock = product.stock === 0;
+
+//     res.status(201).json({
+//       message: 'Product created successfully',
+//       product: productObj
+//     });
+//   } catch (error) {
+//     console.error('Create product error:', error);
+//     res.status(500).json({ message: 'Server error', error: error.message });
+//   }
+// });
+
+// Update product
+// -- Commented out old local upload code ---
 // Update product
 router.put('/farmer/products/:id', auth, uploadProductImage, async (req, res) => {
   try {
@@ -292,12 +362,15 @@ router.put('/farmer/products/:id', auth, uploadProductImage, async (req, res) =>
     }
 
     if (req.file) {
-      if (product.productImage) {
-        const oldPath = path.join(__dirname, '..', product.productImage);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      try {
+        // Upload new image to Cloudinary
+        const result = await uploadToCloudinary(req.file);
+        product.productImage = result.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
       }
-      product.productImage = `/uploads/productImage/${req.file.filename}`;
-    } 
+    }
 
     if (name !== undefined) product.name = name;
     if (category !== undefined) product.category = category;
@@ -315,6 +388,53 @@ router.put('/farmer/products/:id', auth, uploadProductImage, async (req, res) =>
     res.status(500).json({ message: 'Server error' });
   }
 });
+// router.put('/farmer/products/:id', auth, uploadProductImage, async (req, res) => {
+//   try {
+//     if (req.user.userType !== 'farmer') {
+//       return res.status(403).json({ message: 'Access denied.' });
+//     }
+
+//     const farmer = await Farmer.findOne({ user: req.user._id });
+//     if (!farmer) return res.status(404).json({ message: 'Farmer not found' });
+
+//     const product = await Product.findOne({ _id: req.params.id, farmer: farmer._id });
+//     if (!product) return res.status(404).json({ message: 'Product not found' });
+
+//     const { name, category, description, price, stock, unit, isActive } = req.body;
+
+//     if (name && name !== product.name) {
+//       const existingProduct = await Product.findOne({ 
+//         name: { $regex: new RegExp(`^${name}$`, 'i') }, 
+//         farmer: farmer._id,
+//         _id: { $ne: product._id }
+//       });
+//       if (existingProduct) return res.status(400).json({ message: 'Name already taken' });
+//     }
+
+//     if (req.file) {
+//       if (product.productImage) {
+//         const oldPath = path.join(__dirname, '..', product.productImage);
+//         if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+//       }
+//       product.productImage = `/uploads/productImage/${req.file.filename}`;
+//     } 
+
+//     if (name !== undefined) product.name = name;
+//     if (category !== undefined) product.category = category;
+//     if (description !== undefined) product.description = description;
+//     if (price !== undefined) product.price = parseFloat(price);
+//     if (stock !== undefined) product.stock = parseInt(stock);
+//     if (unit !== undefined) product.unit = unit;
+//     if (isActive !== undefined) product.isActive = isActive;
+
+//     await product.save();
+
+//     res.json({ message: 'Product updated successfully', product });
+//   } catch (error) {
+//     console.error('Update error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
 // Update product stock
 router.patch('/farmer/products/:id/stock', auth, async (req, res) => {
